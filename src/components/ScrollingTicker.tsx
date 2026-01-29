@@ -5,258 +5,7 @@ interface ScrollingTickerProps {
   speed?: number
 }
 
-// Complete ASCII art alphabet - 6 rows each
-const ASCII_CHARS: Record<string, string[]> = {
-  'A': [
-    '  ██  ',
-    ' ████ ',
-    '██  ██',
-    '██████',
-    '██  ██',
-    '██  ██',
-  ],
-  'B': [
-    '█████ ',
-    '██  ██',
-    '█████ ',
-    '██  ██',
-    '██  ██',
-    '█████ ',
-  ],
-  'C': [
-    ' █████',
-    '██    ',
-    '██    ',
-    '██    ',
-    '██    ',
-    ' █████',
-  ],
-  'D': [
-    '████  ',
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    '████  ',
-  ],
-  'E': [
-    '██████',
-    '██    ',
-    '████  ',
-    '██    ',
-    '██    ',
-    '██████',
-  ],
-  'F': [
-    '██████',
-    '██    ',
-    '████  ',
-    '██    ',
-    '██    ',
-    '██    ',
-  ],
-  'G': [
-    ' █████',
-    '██    ',
-    '██ ███',
-    '██  ██',
-    '██  ██',
-    ' █████',
-  ],
-  'H': [
-    '██  ██',
-    '██  ██',
-    '██████',
-    '██  ██',
-    '██  ██',
-    '██  ██',
-  ],
-  'I': [
-    '██████',
-    '  ██  ',
-    '  ██  ',
-    '  ██  ',
-    '  ██  ',
-    '██████',
-  ],
-  'J': [
-    '██████',
-    '    ██',
-    '    ██',
-    '    ██',
-    '██  ██',
-    ' ████ ',
-  ],
-  'K': [
-    '██  ██',
-    '██ ██ ',
-    '████  ',
-    '████  ',
-    '██ ██ ',
-    '██  ██',
-  ],
-  'L': [
-    '██    ',
-    '██    ',
-    '██    ',
-    '██    ',
-    '██    ',
-    '██████',
-  ],
-  'M': [
-    '██   ██',
-    '███ ███',
-    '██ █ ██',
-    '██   ██',
-    '██   ██',
-    '██   ██',
-  ],
-  'N': [
-    '██   ██',
-    '███  ██',
-    '██ █ ██',
-    '██  ███',
-    '██   ██',
-    '██   ██',
-  ],
-  'O': [
-    ' ████ ',
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    ' ████ ',
-  ],
-  'P': [
-    '█████ ',
-    '██  ██',
-    '█████ ',
-    '██    ',
-    '██    ',
-    '██    ',
-  ],
-  'Q': [
-    ' ████ ',
-    '██  ██',
-    '██  ██',
-    '██ ███',
-    '██  ██',
-    ' ██████',
-  ],
-  'R': [
-    '█████ ',
-    '██  ██',
-    '█████ ',
-    '████  ',
-    '██ ██ ',
-    '██  ██',
-  ],
-  'S': [
-    ' █████',
-    '██    ',
-    ' ████ ',
-    '    ██',
-    '    ██',
-    '█████ ',
-  ],
-  'T': [
-    '██████',
-    '  ██  ',
-    '  ██  ',
-    '  ██  ',
-    '  ██  ',
-    '  ██  ',
-  ],
-  'U': [
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    ' ████ ',
-  ],
-  'V': [
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    '██  ██',
-    ' ████ ',
-    '  ██  ',
-  ],
-  'W': [
-    '██   ██',
-    '██   ██',
-    '██ █ ██',
-    '██ █ ██',
-    '███ ███',
-    '██   ██',
-  ],
-  'X': [
-    '██  ██',
-    '██  ██',
-    ' ████ ',
-    ' ████ ',
-    '██  ██',
-    '██  ██',
-  ],
-  'Y': [
-    '██  ██',
-    '██  ██',
-    ' ████ ',
-    '  ██  ',
-    '  ██  ',
-    '  ██  ',
-  ],
-  'Z': [
-    '██████',
-    '   ██ ',
-    '  ██  ',
-    ' ██   ',
-    '██    ',
-    '██████',
-  ],
-  ' ': [
-    '   ',
-    '   ',
-    '   ',
-    '   ',
-    '   ',
-    '   ',
-  ],
-  '!': [
-    '██',
-    '██',
-    '██',
-    '██',
-    '  ',
-    '██',
-  ],
-  "'": [
-    '██',
-    '██',
-    '  ',
-    '  ',
-    '  ',
-    '  ',
-  ],
-}
-
-function textToAscii(text: string): string[] {
-  const upperText = text.toUpperCase()
-  const lines: string[] = ['', '', '', '', '', '']
-  
-  for (const char of upperText) {
-    const charArt = ASCII_CHARS[char] || ASCII_CHARS[' ']
-    for (let i = 0; i < 6; i++) {
-      lines[i] += (charArt[i] || '') + ' '
-    }
-  }
-  
-  return lines
-}
-
 export function ScrollingTicker({ message, speed = 10 }: ScrollingTickerProps) {
-  const asciiLines = textToAscii(message)
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const [animationStyle, setAnimationStyle] = useState<React.CSSProperties>({})
@@ -266,7 +15,6 @@ export function ScrollingTicker({ message, speed = 10 }: ScrollingTickerProps) {
       const containerWidth = containerRef.current.offsetWidth
       const contentWidth = contentRef.current.offsetWidth
       
-      // Start from right edge of container, end when fully off left
       const startX = containerWidth
       const endX = -contentWidth
       
@@ -286,18 +34,16 @@ export function ScrollingTicker({ message, speed = 10 }: ScrollingTickerProps) {
     >
       <div 
         ref={contentRef}
-        className="ticker-content whitespace-nowrap font-mono text-xs leading-none"
+        className="ticker-content whitespace-nowrap"
         style={{ 
           ...animationStyle,
+          fontFamily: "'Press Start 2P', monospace",
+          fontSize: '2rem',
           color: 'rgba(255, 255, 255, 0.9)',
           textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
         }}
       >
-        <pre className="inline-block leading-none">
-          {asciiLines.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </pre>
+        {message}
       </div>
     </div>
   )
