@@ -345,7 +345,7 @@ function App() {
 
       {/* Scrolling ticker - 25% height */}
       <div className="relative z-10" style={{ height: '25%' }}>
-        <ScrollingTicker messages={getTickerMessages()} speed={8} />
+        <ScrollingTicker messages={getTickerMessages()} speed={15} />
       </div>
     </div>
   )
