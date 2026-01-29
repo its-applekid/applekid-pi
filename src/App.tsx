@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react'
-import { SunnyFace } from './components/SunnyFace'
-import type { FaceState } from './components/SunnyFace'
+import { AsciiFace } from './components/AsciiFace'
+import type { FaceState } from './components/AsciiFace'
 import { ScrollingTicker } from './components/ScrollingTicker'
+
+// Gradient colors for each state
+const STATE_GRADIENTS: Record<FaceState, { from: string; to: string }> = {
+  awake: { from: '#FF0420', to: '#FF6B35' },      // Red-orange (Optimism)
+  working: { from: '#627EEA', to: '#8C8DFC' },    // Purple (Ethereum)
+  sleeping: { from: '#1a1a2e', to: '#16213e' },   // Dark blue
+  attention: { from: '#FF6B35', to: '#FFD93D' },  // Orange-yellow
+  done: { from: '#00D395', to: '#00F5A0' },       // Green (success)
+}
 
 function App() {
   const [faceState, setFaceState] = useState<FaceState>('awake')
@@ -22,7 +31,7 @@ function App() {
     const interval = setInterval(() => {
       index = (index + 1) % states.length
       setFaceState(states[index] as FaceState)
-    }, 5000)
+    }, 4000)
     return () => clearInterval(interval)
   }, [])
 
@@ -40,38 +49,42 @@ function App() {
     done: 'Done!',
   }
 
+  const gradient = STATE_GRADIENTS[faceState]
+
   return (
     <div 
-      className="h-full w-full flex flex-col"
+      className="h-screen w-screen flex flex-col overflow-hidden transition-all duration-1000 ease-in-out"
       style={{ 
-        backgroundColor: '#1a1a1a',
+        background: `linear-gradient(135deg, ${gradient.from} 0%, ${gradient.to} 100%)`,
         maxWidth: '480px',
         maxHeight: '320px',
         margin: '0 auto',
       }}
     >
+      {/* Animated gradient overlay */}
+      <div 
+        className="absolute inset-0 opacity-30 animate-gradient-shift"
+        style={{
+          background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
+                       radial-gradient(circle at 70% 70%, rgba(255,255,255,0.1) 0%, transparent 50%)`,
+        }}
+      />
+
       {/* Status bar */}
-      <div className="flex justify-between items-center px-3 py-1 text-xs text-gray-400">
+      <div className="relative z-10 flex justify-between items-center px-3 py-1 text-xs text-white/70">
         <span>{formattedTime}</span>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
-          <span>Online</span>
-        </span>
+        <span className="uppercase tracking-wider text-white/50">{stateLabel[faceState]}</span>
       </div>
 
       {/* Main content - Face */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <SunnyFace state={faceState} size={160} />
-        <p 
-          className="mt-2 text-sm font-medium"
-          style={{ color: '#FF0420' }}
-        >
-          {stateLabel[faceState]}
-        </p>
+      <div className="relative z-10 flex-1 flex items-center justify-center">
+        <AsciiFace state={faceState} />
       </div>
 
       {/* Scrolling ticker */}
-      <ScrollingTicker message="GM" speed={8} />
+      <div className="relative z-10">
+        <ScrollingTicker message="GM" speed={8} />
+      </div>
     </div>
   )
 }

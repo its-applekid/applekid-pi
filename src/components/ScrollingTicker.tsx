@@ -58,12 +58,13 @@ export function ScrollingTicker({ message, speed = 10 }: ScrollingTickerProps) {
   const asciiLines = textToAscii(message)
   
   return (
-    <div className="w-full overflow-hidden bg-black/30 py-2">
+    <div className="w-full overflow-hidden bg-black/20 py-2">
       <div 
         className="animate-scroll whitespace-nowrap font-mono text-xs leading-none"
         style={{ 
           animationDuration: `${speed}s`,
-          color: '#FF0420',
+          color: 'rgba(255, 255, 255, 0.9)',
+          textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
         }}
       >
         <pre className="inline-block">

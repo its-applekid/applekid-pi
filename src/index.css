@@ -72,3 +72,23 @@ body {
 .animate-pulse-subtle {
   animation: pulse-subtle 2s ease-in-out infinite;
 }
+
+/* Gradient shift animation */
+@keyframes gradient-shift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(10%, 10%) scale(1.1);
+  }
+  50% {
+    transform: translate(-5%, 15%) scale(1.05);
+  }
+  75% {
+    transform: translate(5%, -5%) scale(1.1);
+  }
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 8s ease-in-out infinite;
+}
