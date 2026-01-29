@@ -65,13 +65,9 @@ function App() {
 
   // Update gradient colors when state changes
   useEffect(() => {
-    if (canvasRef.current) {
+    if (gradientRef.current) {
       const colors = STATE_GRADIENTS[faceState]
-      const canvas = canvasRef.current
-      canvas.style.setProperty('--gradient-color-1', colors[0])
-      canvas.style.setProperty('--gradient-color-2', colors[1])
-      canvas.style.setProperty('--gradient-color-3', colors[2])
-      canvas.style.setProperty('--gradient-color-4', colors[3])
+      gradientRef.current.setColors(colors)
     }
   }, [faceState])
 

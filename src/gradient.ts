@@ -9,6 +9,15 @@ function normalizeColor(hexCode: number): number[] {
   return [(hexCode >> 16 & 255) / 255, (hexCode >> 8 & 255) / 255, (255 & hexCode) / 255]
 }
 
+// Convert hex string to normalized RGB
+export function hexToNormalized(hex: string): number[] {
+  let cleanHex = hex.replace('#', '');
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.split('').map(c => c + c).join('');
+  }
+  return normalizeColor(parseInt(cleanHex, 16));
+}
+
 // Essential functionality of WebGl
 class MiniGl {
   canvas!: HTMLCanvasElement;
@@ -500,6 +509,29 @@ export class Gradient {
     this.el = document.querySelector(selector);
     if (this.el) this.connect();
     return this;
+  };
+
+  // Dynamically update gradient colors (4 hex strings)
+  setColors = (colors: [string, string, string, string]) => {
+    if (!this.uniforms || !this.mesh) return;
+    
+    // Convert hex colors to normalized RGB
+    const normalizedColors = colors.map(hex => hexToNormalized(hex));
+    this.sectionColors = normalizedColors;
+    
+    // Update base color uniform
+    if (this.uniforms.u_baseColor) {
+      this.uniforms.u_baseColor.value = normalizedColors[0];
+    }
+    
+    // Update wave layer colors
+    if (this.uniforms.u_waveLayers && this.uniforms.u_waveLayers.value) {
+      for (let i = 0; i < this.uniforms.u_waveLayers.value.length && i < normalizedColors.length - 1; i++) {
+        if (this.uniforms.u_waveLayers.value[i]?.value?.color) {
+          this.uniforms.u_waveLayers.value[i].value.color.value = normalizedColors[i + 1];
+        }
+      }
+    }
   };
 
   connect() {
