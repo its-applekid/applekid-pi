@@ -68,7 +68,7 @@ export function ScrollingTicker({ messages, speed = 10 }: ScrollingTickerProps) 
           ...animationStyle,
           animation: `ticker-scroll ${speed}s linear infinite`,
           fontFamily: "'Press Start 2P', monospace",
-          fontSize: '2rem',
+          fontSize: '3.5rem',
           color: 'rgba(255, 255, 255, 0.9)',
           textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
         }}
