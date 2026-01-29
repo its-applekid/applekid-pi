@@ -5,8 +5,11 @@ import { ScrollingTicker } from './components/ScrollingTicker'
 import { Gradient } from './gradient'
 import { usePomodoro } from './components/Pomodoro'
 import type { PomodoroPhase } from './components/Pomodoro'
+import { useStopwatch } from './components/Stopwatch'
 import { Sidebar } from './components/Sidebar'
+import type { ActiveMode } from './components/Sidebar'
 import { TimerDisplay } from './components/TimerDisplay'
+import { StopwatchDisplay } from './components/StopwatchDisplay'
 
 // Gruvbox color palette
 const GRUVBOX = {
@@ -46,11 +49,15 @@ const POMODORO_GRADIENTS: Record<PomodoroPhase, GradientColors> = {
   longBreak: [GRUVBOX.blue, GRUVBOX.blueLight, GRUVBOX.purple, GRUVBOX.purpleLight],
 }
 
+// Stopwatch gradient
+const STOPWATCH_GRADIENT: GradientColors = [GRUVBOX.aqua, GRUVBOX.aquaLight, GRUVBOX.blue, GRUVBOX.blueLight]
+
 const TRANSITION_DURATION = 3000 // 3 seconds
 
 function App() {
   const [targetState, setTargetState] = useState<FaceState>('awake')
   const [displayState, setDisplayState] = useState<FaceState>('awake')
+  const [activeMode, setActiveMode] = useState<ActiveMode>('none')
   const [time, setTime] = useState(new Date())
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gradientRef = useRef<Gradient | null>(null)
@@ -60,16 +67,18 @@ function App() {
   // Pomodoro state
   const pomodoro = usePomodoro({
     onPhaseChange: (phase) => {
-      // Update gradient when pomodoro phase changes
-      if (gradientRef.current) {
+      if (gradientRef.current && activeMode === 'pomodoro') {
         gradientRef.current.setColors(POMODORO_GRADIENTS[phase], TRANSITION_DURATION)
       }
     },
     onClose: () => {
-      // Resume demo mode when pomodoro closes
+      setActiveMode('none')
       startDemoMode()
     },
   })
+
+  // Stopwatch state
+  const stopwatch = useStopwatch()
 
   // Update time every second
   useEffect(() => {
@@ -93,21 +102,19 @@ function App() {
     }
   }, [])
 
-  // Update gradient colors when target state changes (only when not in pomodoro)
+  // Update gradient colors when target state changes (only when in demo mode)
   useEffect(() => {
-    if (pomodoro.isActive) return
+    if (activeMode !== 'none') return
     
     if (gradientRef.current) {
       const colors = STATE_GRADIENTS[targetState]
       gradientRef.current.setColors(colors, TRANSITION_DURATION)
     }
     
-    // Clear any pending face update
     if (faceTimeoutRef.current) {
       clearTimeout(faceTimeoutRef.current)
     }
     
-    // Schedule face update after transition completes
     faceTimeoutRef.current = window.setTimeout(() => {
       setDisplayState(targetState)
     }, TRANSITION_DURATION)
@@ -117,7 +124,7 @@ function App() {
         clearTimeout(faceTimeoutRef.current)
       }
     }
-  }, [targetState, pomodoro.isActive])
+  }, [targetState, activeMode])
 
   // Demo mode - cycle through states
   const startDemoMode = () => {
@@ -144,21 +151,46 @@ function App() {
     }
   }, [])
 
-  // Stop demo mode when pomodoro starts
+  // Stop demo mode when any mode becomes active
   useEffect(() => {
-    if (pomodoro.isActive && demoIntervalRef.current) {
+    if (activeMode !== 'none' && demoIntervalRef.current) {
       clearInterval(demoIntervalRef.current)
       demoIntervalRef.current = null
     }
-  }, [pomodoro.isActive])
+  }, [activeMode])
 
   const handleStartPomodoro = () => {
-    // Stop demo mode
     if (demoIntervalRef.current) {
       clearInterval(demoIntervalRef.current)
       demoIntervalRef.current = null
     }
+    setActiveMode('pomodoro')
     pomodoro.start()
+  }
+
+  const handleStartStopwatch = () => {
+    if (demoIntervalRef.current) {
+      clearInterval(demoIntervalRef.current)
+      demoIntervalRef.current = null
+    }
+    setActiveMode('stopwatch')
+    stopwatch.start()
+    // Set stopwatch gradient
+    if (gradientRef.current) {
+      gradientRef.current.setColors(STOPWATCH_GRADIENT, TRANSITION_DURATION)
+    }
+  }
+
+  const handleStopwatchClose = () => {
+    stopwatch.close()
+    setActiveMode('none')
+    startDemoMode()
+  }
+
+  const handlePomodoroClose = () => {
+    pomodoro.close()
+    setActiveMode('none')
+    startDemoMode()
   }
 
   const formattedTime = time.toLocaleTimeString('en-US', {
@@ -167,19 +199,33 @@ function App() {
     hour12: true,
   })
 
-  const stateLabel = pomodoro.isActive
-    ? pomodoro.phase === 'work' ? 'FOCUS' : 'BREAK'
-    : {
-        awake: 'Ready',
-        working: 'Working...',
-        sleeping: 'Zzz...',
-        attention: 'Hey!',
-        done: 'Done!',
-      }[displayState]
+  const getStateLabel = () => {
+    if (activeMode === 'pomodoro') {
+      return pomodoro.phase === 'work' ? 'FOCUS' : 'BREAK'
+    }
+    if (activeMode === 'stopwatch') {
+      return 'STOPWATCH'
+    }
+    return {
+      awake: 'Ready',
+      working: 'Working...',
+      sleeping: 'Zzz...',
+      attention: 'Hey!',
+      done: 'Done!',
+    }[displayState]
+  }
 
-  const currentColors = pomodoro.isActive 
-    ? POMODORO_GRADIENTS[pomodoro.phase]
-    : STATE_GRADIENTS[targetState]
+  const getCurrentColors = (): GradientColors => {
+    if (activeMode === 'pomodoro') {
+      return POMODORO_GRADIENTS[pomodoro.phase]
+    }
+    if (activeMode === 'stopwatch') {
+      return STOPWATCH_GRADIENT
+    }
+    return STATE_GRADIENTS[targetState]
+  }
+
+  const currentColors = getCurrentColors()
 
   return (
     <div 
@@ -212,50 +258,62 @@ function App() {
         {/* Left Sidebar */}
         <div className="w-12 flex-shrink-0">
           <Sidebar
-            pomodoroActive={pomodoro.isActive}
+            activeMode={activeMode}
             pomodoroPaused={pomodoro.isPaused}
+            stopwatchPaused={stopwatch.isPaused}
             onStartPomodoro={handleStartPomodoro}
-            onPause={pomodoro.pause}
-            onSkip={pomodoro.skip}
-            onReset={pomodoro.reset}
-            onClose={pomodoro.close}
+            onStartStopwatch={handleStartStopwatch}
+            onPomodoroPause={pomodoro.pause}
+            onPomodoroSkip={pomodoro.skip}
+            onPomodoroReset={pomodoro.reset}
+            onPomodoroClose={handlePomodoroClose}
+            onStopwatchPause={stopwatch.pause}
+            onStopwatchLap={stopwatch.lap}
+            onStopwatchClose={handleStopwatchClose}
           />
         </div>
 
         {/* Main area */}
         <div className="flex-1 flex items-center justify-center relative">
-          {/* Status in corner */}
+          {/* Clock in corner */}
           <div className="absolute top-2 left-1 text-xs text-white/70">
             {formattedTime}
           </div>
           
-          {pomodoro.isActive ? (
-            // Pomodoro mode layout
+          {activeMode !== 'none' ? (
+            // Timer/Stopwatch mode layout
             <>
               {/* Face in top right */}
-              <div 
-                className="absolute top-1 right-2 transition-all duration-500"
-              >
+              <div className="absolute top-1 right-2 transition-all duration-500">
                 <div className="flex flex-col items-end">
                   <div className="text-xs uppercase tracking-wider text-white/50 mb-1">
-                    {stateLabel}
+                    {getStateLabel()}
                   </div>
                   <AsciiFace state="working" size="small" />
                 </div>
               </div>
               
-              {/* Timer in center */}
-              <TimerDisplay
-                timeRemaining={pomodoro.timeRemaining}
-                phase={pomodoro.phase}
-                isPaused={pomodoro.isPaused}
-              />
+              {/* Timer/Stopwatch in center */}
+              {activeMode === 'pomodoro' ? (
+                <TimerDisplay
+                  timeRemaining={pomodoro.timeRemaining}
+                  phase={pomodoro.phase}
+                  isPaused={pomodoro.isPaused}
+                />
+              ) : (
+                <StopwatchDisplay
+                  elapsedTime={stopwatch.elapsedTime}
+                  currentLapTime={stopwatch.currentLapTime}
+                  laps={stopwatch.laps}
+                  isPaused={stopwatch.isPaused}
+                />
+              )}
             </>
           ) : (
             // Normal mode layout
             <>
               <div className="absolute top-2 right-2 text-xs uppercase tracking-wider text-white/50">
-                {stateLabel}
+                {getStateLabel()}
               </div>
               
               {/* Face - centered */}

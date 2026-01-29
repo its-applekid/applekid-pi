@@ -1,90 +1,139 @@
+export type ActiveMode = 'none' | 'pomodoro' | 'stopwatch'
+
 interface SidebarProps {
-  pomodoroActive: boolean
+  activeMode: ActiveMode
   pomodoroPaused: boolean
+  stopwatchPaused: boolean
   onStartPomodoro: () => void
-  onPause: () => void
-  onSkip: () => void
-  onReset: () => void
-  onClose: () => void
+  onStartStopwatch: () => void
+  // Pomodoro controls
+  onPomodoroPause: () => void
+  onPomodoroSkip: () => void
+  onPomodoroReset: () => void
+  onPomodoroClose: () => void
+  // Stopwatch controls
+  onStopwatchPause: () => void
+  onStopwatchLap: () => void
+  onStopwatchClose: () => void
 }
 
-// Apple emoji/icon for pomodoro
+// Icons
 const AppleIcon = () => (
-  <span className="text-2xl" role="img" aria-label="pomodoro">🍎</span>
+  <span className="text-xl" role="img" aria-label="pomodoro">🍎</span>
 )
 
-// Control icons
+const StopwatchIcon = () => (
+  <span className="text-xl" role="img" aria-label="stopwatch">⏱</span>
+)
+
 const PauseIcon = () => (
-  <span className="text-lg">⏸</span>
+  <span className="text-base">⏸</span>
 )
 
 const PlayIcon = () => (
-  <span className="text-lg">▶</span>
+  <span className="text-base">▶</span>
 )
 
 const SkipIcon = () => (
-  <span className="text-lg">⏭</span>
+  <span className="text-base">⏭</span>
 )
 
 const ResetIcon = () => (
-  <span className="text-lg">↺</span>
+  <span className="text-base">↺</span>
 )
 
 const CloseIcon = () => (
-  <span className="text-lg">✕</span>
+  <span className="text-base">✕</span>
 )
 
+const LapIcon = () => (
+  <span className="text-base">🏁</span>
+)
+
+function IconButton({ 
+  onClick, 
+  title, 
+  children 
+}: { 
+  onClick: () => void
+  title: string
+  children: React.ReactNode 
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
+      title={title}
+    >
+      {children}
+    </button>
+  )
+}
+
 export function Sidebar({
-  pomodoroActive,
+  activeMode,
   pomodoroPaused,
+  stopwatchPaused,
   onStartPomodoro,
-  onPause,
-  onSkip,
-  onReset,
-  onClose,
+  onStartStopwatch,
+  onPomodoroPause,
+  onPomodoroSkip,
+  onPomodoroReset,
+  onPomodoroClose,
+  onStopwatchPause,
+  onStopwatchLap,
+  onStopwatchClose,
 }: SidebarProps) {
   return (
-    <div className="h-full flex flex-col justify-center items-center gap-3 px-2">
-      {!pomodoroActive ? (
-        // Start pomodoro button
-        <button
-          onClick={onStartPomodoro}
-          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
-          title="Start Pomodoro"
-        >
-          <AppleIcon />
-        </button>
-      ) : (
+    <div className="h-full flex flex-col justify-center items-center gap-2 px-1">
+      {activeMode === 'none' && (
+        // Mode selection buttons
+        <>
+          <IconButton onClick={onStartPomodoro} title="Start Pomodoro">
+            <AppleIcon />
+          </IconButton>
+          <IconButton onClick={onStartStopwatch} title="Start Stopwatch">
+            <StopwatchIcon />
+          </IconButton>
+        </>
+      )}
+      
+      {activeMode === 'pomodoro' && (
         // Pomodoro controls
         <>
-          <button
-            onClick={onPause}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
+          <IconButton 
+            onClick={onPomodoroPause} 
             title={pomodoroPaused ? "Resume" : "Pause"}
           >
             {pomodoroPaused ? <PlayIcon /> : <PauseIcon />}
-          </button>
-          <button
-            onClick={onSkip}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
-            title="Skip to next phase"
-          >
+          </IconButton>
+          <IconButton onClick={onPomodoroSkip} title="Skip to next phase">
             <SkipIcon />
-          </button>
-          <button
-            onClick={onReset}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
-            title="Reset to beginning"
-          >
+          </IconButton>
+          <IconButton onClick={onPomodoroReset} title="Reset to beginning">
             <ResetIcon />
-          </button>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
-            title="End pomodoro"
-          >
+          </IconButton>
+          <IconButton onClick={onPomodoroClose} title="End pomodoro">
             <CloseIcon />
-          </button>
+          </IconButton>
+        </>
+      )}
+      
+      {activeMode === 'stopwatch' && (
+        // Stopwatch controls
+        <>
+          <IconButton 
+            onClick={onStopwatchPause} 
+            title={stopwatchPaused ? "Resume" : "Pause"}
+          >
+            {stopwatchPaused ? <PlayIcon /> : <PauseIcon />}
+          </IconButton>
+          <IconButton onClick={onStopwatchLap} title="Lap">
+            <LapIcon />
+          </IconButton>
+          <IconButton onClick={onStopwatchClose} title="Close stopwatch">
+            <CloseIcon />
+          </IconButton>
         </>
       )}
     </div>
