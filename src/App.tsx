@@ -3,6 +3,10 @@ import { AsciiFace } from './components/AsciiFace'
 import type { FaceState } from './components/AsciiFace'
 import { ScrollingTicker } from './components/ScrollingTicker'
 import { Gradient } from './gradient'
+import { usePomodoro } from './components/Pomodoro'
+import type { PomodoroPhase } from './components/Pomodoro'
+import { Sidebar } from './components/Sidebar'
+import { TimerDisplay } from './components/TimerDisplay'
 
 // Gruvbox color palette
 const GRUVBOX = {
@@ -25,7 +29,7 @@ const GRUVBOX = {
   orangeLight: '#fe8019',
 }
 
-// Gradient colors for each state - 4 colors for WebGL mesh gradient
+// Gradient colors for each face state
 type GradientColors = [string, string, string, string]
 const STATE_GRADIENTS: Record<FaceState, GradientColors> = {
   awake: [GRUVBOX.orange, GRUVBOX.orangeLight, GRUVBOX.yellow, GRUVBOX.yellowLight],
@@ -33,6 +37,13 @@ const STATE_GRADIENTS: Record<FaceState, GradientColors> = {
   sleeping: [GRUVBOX.bg, GRUVBOX.bg1, GRUVBOX.bg2, GRUVBOX.bg1],
   attention: [GRUVBOX.red, GRUVBOX.redLight, GRUVBOX.orange, GRUVBOX.orangeLight],
   done: [GRUVBOX.green, GRUVBOX.greenLight, GRUVBOX.aqua, GRUVBOX.aquaLight],
+}
+
+// Pomodoro phase gradients
+const POMODORO_GRADIENTS: Record<PomodoroPhase, GradientColors> = {
+  work: [GRUVBOX.red, GRUVBOX.redLight, GRUVBOX.orange, GRUVBOX.orangeLight],
+  shortBreak: [GRUVBOX.green, GRUVBOX.greenLight, GRUVBOX.aqua, GRUVBOX.aquaLight],
+  longBreak: [GRUVBOX.blue, GRUVBOX.blueLight, GRUVBOX.purple, GRUVBOX.purpleLight],
 }
 
 const TRANSITION_DURATION = 3000 // 3 seconds
@@ -44,6 +55,21 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gradientRef = useRef<Gradient | null>(null)
   const faceTimeoutRef = useRef<number | null>(null)
+  const demoIntervalRef = useRef<number | null>(null)
+
+  // Pomodoro state
+  const pomodoro = usePomodoro({
+    onPhaseChange: (phase) => {
+      // Update gradient when pomodoro phase changes
+      if (gradientRef.current) {
+        gradientRef.current.setColors(POMODORO_GRADIENTS[phase], TRANSITION_DURATION)
+      }
+    },
+    onClose: () => {
+      // Resume demo mode when pomodoro closes
+      startDemoMode()
+    },
+  })
 
   // Update time every second
   useEffect(() => {
@@ -67,9 +93,10 @@ function App() {
     }
   }, [])
 
-  // Update gradient colors immediately when target state changes
-  // But delay face update until transition completes
+  // Update gradient colors when target state changes (only when not in pomodoro)
   useEffect(() => {
+    if (pomodoro.isActive) return
+    
     if (gradientRef.current) {
       const colors = STATE_GRADIENTS[targetState]
       gradientRef.current.setColors(colors, TRANSITION_DURATION)
@@ -90,18 +117,49 @@ function App() {
         clearTimeout(faceTimeoutRef.current)
       }
     }
-  }, [targetState])
+  }, [targetState, pomodoro.isActive])
 
-  // Cycle through states for demo (remove in production)
-  useEffect(() => {
+  // Demo mode - cycle through states
+  const startDemoMode = () => {
+    if (demoIntervalRef.current) {
+      clearInterval(demoIntervalRef.current)
+    }
+    
     const states: FaceState[] = ['awake', 'working', 'done', 'attention', 'sleeping']
     let index = 0
-    const interval = setInterval(() => {
+    
+    demoIntervalRef.current = window.setInterval(() => {
       index = (index + 1) % states.length
       setTargetState(states[index])
-    }, 10000) // 10 second rotation
-    return () => clearInterval(interval)
-  }, []) // Empty deps - only run once on mount
+    }, 10000)
+  }
+
+  // Start demo mode on mount
+  useEffect(() => {
+    startDemoMode()
+    return () => {
+      if (demoIntervalRef.current) {
+        clearInterval(demoIntervalRef.current)
+      }
+    }
+  }, [])
+
+  // Stop demo mode when pomodoro starts
+  useEffect(() => {
+    if (pomodoro.isActive && demoIntervalRef.current) {
+      clearInterval(demoIntervalRef.current)
+      demoIntervalRef.current = null
+    }
+  }, [pomodoro.isActive])
+
+  const handleStartPomodoro = () => {
+    // Stop demo mode
+    if (demoIntervalRef.current) {
+      clearInterval(demoIntervalRef.current)
+      demoIntervalRef.current = null
+    }
+    pomodoro.start()
+  }
 
   const formattedTime = time.toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -109,15 +167,19 @@ function App() {
     hour12: true,
   })
 
-  const stateLabel = {
-    awake: 'Ready',
-    working: 'Working...',
-    sleeping: 'Zzz...',
-    attention: 'Hey!',
-    done: 'Done!',
-  }
+  const stateLabel = pomodoro.isActive
+    ? pomodoro.phase === 'work' ? 'FOCUS' : 'BREAK'
+    : {
+        awake: 'Ready',
+        working: 'Working...',
+        sleeping: 'Zzz...',
+        attention: 'Hey!',
+        done: 'Done!',
+      }[displayState]
 
-  const currentColors = STATE_GRADIENTS[targetState]
+  const currentColors = pomodoro.isActive 
+    ? POMODORO_GRADIENTS[pomodoro.phase]
+    : STATE_GRADIENTS[targetState]
 
   return (
     <div 
@@ -138,7 +200,6 @@ function App() {
           left: 0,
           width: '100%',
           height: '100%',
-          // @ts-ignore - CSS custom properties for gradient colors
           '--gradient-color-1': currentColors[0],
           '--gradient-color-2': currentColors[1],
           '--gradient-color-3': currentColors[2],
@@ -147,25 +208,69 @@ function App() {
       />
 
       {/* Main content - 75% height */}
-      <div className="relative z-10 flex-1 flex items-center justify-center" style={{ height: '75%' }}>
-        {/* Status in corner */}
-        <div className="absolute top-2 left-3 text-xs text-white/70">
-          {formattedTime}
+      <div className="relative z-10 flex-1 flex" style={{ height: '75%' }}>
+        {/* Left Sidebar */}
+        <div className="w-12 flex-shrink-0">
+          <Sidebar
+            pomodoroActive={pomodoro.isActive}
+            pomodoroPaused={pomodoro.isPaused}
+            onStartPomodoro={handleStartPomodoro}
+            onPause={pomodoro.pause}
+            onSkip={pomodoro.skip}
+            onReset={pomodoro.reset}
+            onClose={pomodoro.close}
+          />
         </div>
-        <div className="absolute top-2 right-3 text-xs uppercase tracking-wider text-white/50">
-          {stateLabel[displayState]}
-        </div>
-        
-        {/* Face - small centered square */}
-        <div 
-          className="flex items-center justify-center"
-          style={{ 
-            width: '20%', 
-            height: '100%',
-            maxWidth: '96px',
-          }}
-        >
-          <AsciiFace state={displayState} size="small" />
+
+        {/* Main area */}
+        <div className="flex-1 flex items-center justify-center relative">
+          {/* Status in corner */}
+          <div className="absolute top-2 left-1 text-xs text-white/70">
+            {formattedTime}
+          </div>
+          
+          {pomodoro.isActive ? (
+            // Pomodoro mode layout
+            <>
+              {/* Face in top right */}
+              <div 
+                className="absolute top-1 right-2 transition-all duration-500"
+              >
+                <div className="flex flex-col items-end">
+                  <div className="text-xs uppercase tracking-wider text-white/50 mb-1">
+                    {stateLabel}
+                  </div>
+                  <AsciiFace state="working" size="small" />
+                </div>
+              </div>
+              
+              {/* Timer in center */}
+              <TimerDisplay
+                timeRemaining={pomodoro.timeRemaining}
+                phase={pomodoro.phase}
+                isPaused={pomodoro.isPaused}
+              />
+            </>
+          ) : (
+            // Normal mode layout
+            <>
+              <div className="absolute top-2 right-2 text-xs uppercase tracking-wider text-white/50">
+                {stateLabel}
+              </div>
+              
+              {/* Face - centered */}
+              <div 
+                className="flex items-center justify-center transition-all duration-500"
+                style={{ 
+                  width: '20%', 
+                  height: '100%',
+                  maxWidth: '96px',
+                }}
+              >
+                <AsciiFace state={displayState} size="small" />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
