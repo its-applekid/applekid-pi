@@ -1,4 +1,36 @@
+import { useState } from 'react'
+import { 
+  Apple, 
+  Timer, 
+  Pause, 
+  Play, 
+  SkipForward, 
+  RotateCcw, 
+  X,
+  Flag,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react'
+
 export type ActiveMode = 'none' | 'pomodoro' | 'stopwatch'
+
+interface IconButtonProps {
+  onClick: () => void
+  title: string
+  children: React.ReactNode
+}
+
+function IconButton({ onClick, title, children }: IconButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
+      title={title}
+    >
+      {children}
+    </button>
+  )
+}
 
 interface SidebarProps {
   activeMode: ActiveMode
@@ -6,68 +38,20 @@ interface SidebarProps {
   stopwatchPaused: boolean
   onStartPomodoro: () => void
   onStartStopwatch: () => void
-  // Pomodoro controls
   onPomodoroPause: () => void
   onPomodoroSkip: () => void
   onPomodoroReset: () => void
   onPomodoroClose: () => void
-  // Stopwatch controls
   onStopwatchPause: () => void
   onStopwatchLap: () => void
   onStopwatchClose: () => void
 }
 
-// Icons
-const AppleIcon = () => (
-  <span className="text-xl" role="img" aria-label="pomodoro">🍎</span>
-)
-
-const StopwatchIcon = () => (
-  <span className="text-xl" role="img" aria-label="stopwatch">⏱</span>
-)
-
-const PauseIcon = () => (
-  <span className="text-base">⏸</span>
-)
-
-const PlayIcon = () => (
-  <span className="text-base">▶</span>
-)
-
-const SkipIcon = () => (
-  <span className="text-base">⏭</span>
-)
-
-const ResetIcon = () => (
-  <span className="text-base">↺</span>
-)
-
-const CloseIcon = () => (
-  <span className="text-base">✕</span>
-)
-
-const LapIcon = () => (
-  <span className="text-base">🏁</span>
-)
-
-function IconButton({ 
-  onClick, 
-  title, 
-  children 
-}: { 
+// Define icon sets for each mode
+type IconItem = {
+  icon: React.ReactNode
   onClick: () => void
   title: string
-  children: React.ReactNode 
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
-      title={title}
-    >
-      {children}
-    </button>
-  )
 }
 
 export function Sidebar({
@@ -84,57 +68,119 @@ export function Sidebar({
   onStopwatchLap,
   onStopwatchClose,
 }: SidebarProps) {
+  const [scrollOffset, setScrollOffset] = useState(0)
+  const iconSize = 20
+  const strokeWidth = 1.5
+
+  // Build icon list based on mode
+  const getIcons = (): IconItem[] => {
+    if (activeMode === 'none') {
+      return [
+        { 
+          icon: <Apple size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onStartPomodoro, 
+          title: 'Start Pomodoro' 
+        },
+        { 
+          icon: <Timer size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onStartStopwatch, 
+          title: 'Start Stopwatch' 
+        },
+      ]
+    }
+
+    if (activeMode === 'pomodoro') {
+      return [
+        { 
+          icon: pomodoroPaused 
+            ? <Play size={iconSize} strokeWidth={strokeWidth} /> 
+            : <Pause size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onPomodoroPause, 
+          title: pomodoroPaused ? 'Resume' : 'Pause' 
+        },
+        { 
+          icon: <SkipForward size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onPomodoroSkip, 
+          title: 'Skip to next phase' 
+        },
+        { 
+          icon: <RotateCcw size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onPomodoroReset, 
+          title: 'Reset to beginning' 
+        },
+        { 
+          icon: <X size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onPomodoroClose, 
+          title: 'End pomodoro' 
+        },
+      ]
+    }
+
+    if (activeMode === 'stopwatch') {
+      return [
+        { 
+          icon: stopwatchPaused 
+            ? <Play size={iconSize} strokeWidth={strokeWidth} /> 
+            : <Pause size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onStopwatchPause, 
+          title: stopwatchPaused ? 'Resume' : 'Pause' 
+        },
+        { 
+          icon: <Flag size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onStopwatchLap, 
+          title: 'Lap' 
+        },
+        { 
+          icon: <X size={iconSize} strokeWidth={strokeWidth} />, 
+          onClick: onStopwatchClose, 
+          title: 'Close stopwatch' 
+        },
+      ]
+    }
+
+    return []
+  }
+
+  const allIcons = getIcons()
+  const maxVisible = 4
+  const needsPagination = allIcons.length > maxVisible
+  const canScrollUp = scrollOffset > 0
+  const canScrollDown = scrollOffset + maxVisible < allIcons.length
+
+  // Get visible icons (accounting for navigation arrows taking slots)
+  const getVisibleIcons = () => {
+    if (!needsPagination) return allIcons
+    
+    const availableSlots = maxVisible - (canScrollUp ? 1 : 0) - (canScrollDown ? 1 : 0)
+    return allIcons.slice(scrollOffset, scrollOffset + availableSlots)
+  }
+
+  const visibleIcons = getVisibleIcons()
+
+  const scrollUp = () => setScrollOffset(prev => Math.max(0, prev - 1))
+  const scrollDown = () => setScrollOffset(prev => Math.min(allIcons.length - maxVisible + 1, prev + 1))
+
   return (
-    <div className="h-full flex flex-col justify-center items-center gap-2 px-1">
-      {activeMode === 'none' && (
-        // Mode selection buttons
-        <>
-          <IconButton onClick={onStartPomodoro} title="Start Pomodoro">
-            <AppleIcon />
-          </IconButton>
-          <IconButton onClick={onStartStopwatch} title="Start Stopwatch">
-            <StopwatchIcon />
-          </IconButton>
-        </>
+    <div className="h-full flex flex-col justify-center items-center gap-2 px-2 text-white/90">
+      {/* Up arrow if needed */}
+      {needsPagination && canScrollUp && (
+        <IconButton onClick={scrollUp} title="Scroll up">
+          <ChevronUp size={iconSize} strokeWidth={strokeWidth} />
+        </IconButton>
       )}
-      
-      {activeMode === 'pomodoro' && (
-        // Pomodoro controls
-        <>
-          <IconButton 
-            onClick={onPomodoroPause} 
-            title={pomodoroPaused ? "Resume" : "Pause"}
-          >
-            {pomodoroPaused ? <PlayIcon /> : <PauseIcon />}
-          </IconButton>
-          <IconButton onClick={onPomodoroSkip} title="Skip to next phase">
-            <SkipIcon />
-          </IconButton>
-          <IconButton onClick={onPomodoroReset} title="Reset to beginning">
-            <ResetIcon />
-          </IconButton>
-          <IconButton onClick={onPomodoroClose} title="End pomodoro">
-            <CloseIcon />
-          </IconButton>
-        </>
-      )}
-      
-      {activeMode === 'stopwatch' && (
-        // Stopwatch controls
-        <>
-          <IconButton 
-            onClick={onStopwatchPause} 
-            title={stopwatchPaused ? "Resume" : "Pause"}
-          >
-            {stopwatchPaused ? <PlayIcon /> : <PauseIcon />}
-          </IconButton>
-          <IconButton onClick={onStopwatchLap} title="Lap">
-            <LapIcon />
-          </IconButton>
-          <IconButton onClick={onStopwatchClose} title="Close stopwatch">
-            <CloseIcon />
-          </IconButton>
-        </>
+
+      {/* Visible icons */}
+      {visibleIcons.map((item, index) => (
+        <IconButton key={index} onClick={item.onClick} title={item.title}>
+          {item.icon}
+        </IconButton>
+      ))}
+
+      {/* Down arrow if needed */}
+      {needsPagination && canScrollDown && (
+        <IconButton onClick={scrollDown} title="Scroll down">
+          <ChevronDown size={iconSize} strokeWidth={strokeWidth} />
+        </IconButton>
       )}
     </div>
   )
