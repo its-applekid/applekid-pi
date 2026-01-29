@@ -4,9 +4,10 @@ import { shuffleArray } from '../messages'
 interface ScrollingTickerProps {
   messages: string[]
   speed?: number
+  gapSeconds?: number
 }
 
-export function ScrollingTicker({ messages, speed = 10 }: ScrollingTickerProps) {
+export function ScrollingTicker({ messages, speed = 10, gapSeconds = 15 }: ScrollingTickerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   
@@ -14,31 +15,43 @@ export function ScrollingTicker({ messages, speed = 10 }: ScrollingTickerProps) 
   const [shuffledMessages, setShuffledMessages] = useState<string[]>(() => shuffleArray(messages))
   const [currentIndex, setCurrentIndex] = useState(0)
   const [animationKey, setAnimationKey] = useState(0)
+  const [isWaiting, setIsWaiting] = useState(false)
 
   // Reshuffle when messages array changes
   useEffect(() => {
     setShuffledMessages(shuffleArray(messages))
     setCurrentIndex(0)
     setAnimationKey(prev => prev + 1)
+    setIsWaiting(false)
   }, [messages])
 
-  // Timer to advance to next message
+  // Timer to advance to next message (with gap)
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex(prev => {
-        const nextIndex = prev + 1
-        // If we've gone through all messages, reshuffle
-        if (nextIndex >= shuffledMessages.length) {
-          setShuffledMessages(shuffleArray(messages))
-          return 0
-        }
-        return nextIndex
-      })
-      setAnimationKey(prev => prev + 1)
-    }, speed * 1000)
+    if (isWaiting) {
+      // During gap, wait then show next message
+      const gapTimer = setTimeout(() => {
+        setCurrentIndex(prev => {
+          const nextIndex = prev + 1
+          if (nextIndex >= shuffledMessages.length) {
+            setShuffledMessages(shuffleArray(messages))
+            return 0
+          }
+          return nextIndex
+        })
+        setAnimationKey(prev => prev + 1)
+        setIsWaiting(false)
+      }, gapSeconds * 1000)
 
-    return () => clearInterval(interval)
-  }, [speed, messages, shuffledMessages.length])
+      return () => clearTimeout(gapTimer)
+    } else {
+      // During scroll, wait for animation to finish then enter gap
+      const scrollTimer = setTimeout(() => {
+        setIsWaiting(true)
+      }, speed * 1000)
+
+      return () => clearTimeout(scrollTimer)
+    }
+  }, [isWaiting, speed, gapSeconds, messages, shuffledMessages.length, animationKey])
 
   const [animationStyle, setAnimationStyle] = useState<React.CSSProperties>({})
   const currentMessage = shuffledMessages[currentIndex] || messages[0] || ''
@@ -63,21 +76,23 @@ export function ScrollingTicker({ messages, speed = 10 }: ScrollingTickerProps) 
       ref={containerRef}
       className="w-full h-full overflow-hidden bg-black/20 flex items-center"
     >
-      <div 
-        ref={contentRef}
-        key={animationKey}
-        className="ticker-content whitespace-nowrap"
-        style={{ 
-          ...animationStyle,
-          animation: `ticker-scroll ${speed}s linear`,
-          fontFamily: "'Press Start 2P', monospace",
-          fontSize: '3.5rem',
-          color: 'rgba(255, 255, 255, 0.9)',
-          textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
-        }}
-      >
-        {currentMessage}
-      </div>
+      {!isWaiting && (
+        <div 
+          ref={contentRef}
+          key={animationKey}
+          className="ticker-content whitespace-nowrap"
+          style={{ 
+            ...animationStyle,
+            animation: `ticker-scroll ${speed}s linear`,
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: '3.5rem',
+            color: 'rgba(255, 255, 255, 0.9)',
+            textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
+          }}
+        >
+          {currentMessage}
+        </div>
+      )}
     </div>
   )
 }
