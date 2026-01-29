@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AsciiFace } from './components/AsciiFace'
 import type { FaceState } from './components/AsciiFace'
 import { ScrollingTicker } from './components/ScrollingTicker'
+import { Gradient } from './gradient'
 
 // Gruvbox color palette
 const GRUVBOX = {
@@ -24,30 +25,21 @@ const GRUVBOX = {
   orangeLight: '#fe8019',
 }
 
-// Gradient colors for each state - Gruvbox palette
-const STATE_GRADIENTS: Record<FaceState, { colors: string[] }> = {
-  awake: { 
-    colors: [GRUVBOX.orange, GRUVBOX.orangeLight, GRUVBOX.yellow, GRUVBOX.yellowLight, GRUVBOX.orange]
-  },
-  working: { 
-    colors: [GRUVBOX.purple, GRUVBOX.purpleLight, GRUVBOX.blue, GRUVBOX.blueLight, GRUVBOX.purple]
-  },
-  sleeping: { 
-    colors: [GRUVBOX.bg, GRUVBOX.bg1, GRUVBOX.bg2, GRUVBOX.bg1, GRUVBOX.bg]
-  },
-  attention: { 
-    colors: [GRUVBOX.red, GRUVBOX.redLight, GRUVBOX.orange, GRUVBOX.orangeLight, GRUVBOX.red]
-  },
-  done: { 
-    colors: [GRUVBOX.green, GRUVBOX.greenLight, GRUVBOX.aqua, GRUVBOX.aquaLight, GRUVBOX.green]
-  },
+// Gradient colors for each state - 4 colors for WebGL mesh gradient
+type GradientColors = [string, string, string, string]
+const STATE_GRADIENTS: Record<FaceState, GradientColors> = {
+  awake: [GRUVBOX.orange, GRUVBOX.orangeLight, GRUVBOX.yellow, GRUVBOX.yellowLight],
+  working: [GRUVBOX.purple, GRUVBOX.purpleLight, GRUVBOX.blue, GRUVBOX.blueLight],
+  sleeping: [GRUVBOX.bg, GRUVBOX.bg1, GRUVBOX.bg2, GRUVBOX.bg1],
+  attention: [GRUVBOX.red, GRUVBOX.redLight, GRUVBOX.orange, GRUVBOX.orangeLight],
+  done: [GRUVBOX.green, GRUVBOX.greenLight, GRUVBOX.aqua, GRUVBOX.aquaLight],
 }
 
 function App() {
   const [faceState, setFaceState] = useState<FaceState>('awake')
-  const [prevState, setPrevState] = useState<FaceState>('awake')
-  const [isTransitioning, setIsTransitioning] = useState(false)
   const [time, setTime] = useState(new Date())
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const gradientRef = useRef<Gradient | null>(null)
 
   // Update time every second
   useEffect(() => {
@@ -57,17 +49,36 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
-  // Handle state transitions with crossfade
+  // Initialize gradient
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+    const gradient = new Gradient()
+    gradientRef.current = gradient
+    gradient.initGradient('#gradient-canvas')
+
+    return () => {
+      gradient.pause()
+      gradient.disconnect()
+    }
+  }, [])
+
+  // Update gradient colors when state changes
+  useEffect(() => {
+    if (canvasRef.current) {
+      const colors = STATE_GRADIENTS[faceState]
+      const canvas = canvasRef.current
+      canvas.style.setProperty('--gradient-color-1', colors[0])
+      canvas.style.setProperty('--gradient-color-2', colors[1])
+      canvas.style.setProperty('--gradient-color-3', colors[2])
+      canvas.style.setProperty('--gradient-color-4', colors[3])
+    }
+  }, [faceState])
+
+  // Handle state transitions
   const transitionToState = (newState: FaceState) => {
     if (newState === faceState) return
-    setPrevState(faceState)
-    setIsTransitioning(true)
     setFaceState(newState)
-    
-    // End transition after 3 seconds
-    setTimeout(() => {
-      setIsTransitioning(false)
-    }, 3000)
   }
 
   // Cycle through states for demo (remove in production)
@@ -95,12 +106,7 @@ function App() {
     done: 'Done!',
   }
 
-  const currentGradient = STATE_GRADIENTS[faceState]
-  const prevGradient = STATE_GRADIENTS[prevState]
-  
-  const makeGradientStr = (colors: string[]) => colors.map((c, i) => 
-    `${c} ${(i / (colors.length - 1)) * 100}%`
-  ).join(', ')
+  const currentColors = STATE_GRADIENTS[faceState]
 
   return (
     <div 
@@ -111,38 +117,22 @@ function App() {
         margin: '0 auto',
       }}
     >
-      {/* Current state gradient (base layer, always visible) */}
-      <div 
-        className="absolute inset-0 animate-gradient-move"
+      {/* WebGL Mesh Gradient Background */}
+      <canvas
+        ref={canvasRef}
+        id="gradient-canvas"
         style={{
-          background: `linear-gradient(135deg, ${makeGradientStr(currentGradient.colors)})`,
-          backgroundSize: '400% 400%',
-        }}
-      />
-      
-      {/* Previous state gradient (fades out over 3s when transition starts) */}
-      {isTransitioning && (
-        <div 
-          className="absolute inset-0 animate-gradient-move animate-fade-out"
-          style={{
-            background: `linear-gradient(135deg, ${makeGradientStr(prevGradient.colors)})`,
-            backgroundSize: '400% 400%',
-          }}
-        />
-      )}
-
-      {/* Floating orbs for depth */}
-      <div 
-        className="absolute inset-0 animate-orb-float pointer-events-none"
-        style={{
-          background: `radial-gradient(circle at 30% 40%, rgba(255,255,255,0.15) 0%, transparent 40%)`,
-        }}
-      />
-      <div 
-        className="absolute inset-0 animate-orb-float-delayed pointer-events-none"
-        style={{
-          background: `radial-gradient(circle at 70% 60%, rgba(255,255,255,0.1) 0%, transparent 35%)`,
-        }}
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          // @ts-ignore - CSS custom properties for gradient colors
+          '--gradient-color-1': currentColors[0],
+          '--gradient-color-2': currentColors[1],
+          '--gradient-color-3': currentColors[2],
+          '--gradient-color-4': currentColors[3],
+        } as React.CSSProperties}
       />
 
       {/* Main content - 80% height */}
