@@ -33,20 +33,15 @@ export const GM_MESSAGES = [
   'MODULAR',
   'INTEROP',
   
-  // Public goods / Impact
+  // Public goods
   'FUND PUBLIC GOODS',
   'RETRO FUNDING',
-  'IMPACT EQUALS PROFIT',
   'FOR THE PEOPLE',
-  'COLLECTIVE',
   'COORDINATION',
-  'ALIGN INCENTIVES',
   'POSITIVE SUM',
   'WIN WIN WIN',
-  'COMMON GOOD',
   'BUILD IN PUBLIC',
   'OPEN ACCESS',
-  'CREDIBLE NEUTRAL',
   
   // Positive vibes
   'GOOD VIBES ONLY',
@@ -54,7 +49,6 @@ export const GM_MESSAGES = [
   'BRIGHT DAYS',
   'STAY GOLDEN',
   'KEEP SHINING',
-  'RADIATE POSITIVITY',
   'SPREAD LOVE',
   'BE KIND',
   'STAY CURIOUS',
@@ -73,10 +67,8 @@ export const GM_MESSAGES = [
   'FLOW STATE',
   'IN THE ZONE',
   'TUNNEL VISION',
-  'EXECUTE',
   'SHIP IT',
   'BUILD BUILD BUILD',
-  'GRINDSET',
   'NO DAYS OFF',
   'RISE N GRIND',
   'EARLY BIRD',
@@ -92,7 +84,6 @@ export const GM_MESSAGES = [
   'ITS GIVING',
   'SLAY',
   'PERIODT',
-  'UNDERSTOOD THE ASSIGNMENT',
   'MAIN CHARACTER',
   'NPC BEHAVIOR',
   'TOUCH GRASS',
@@ -100,11 +91,15 @@ export const GM_MESSAGES = [
   'FEW UNDERSTAND',
   'COPE',
   'SEETHE',
-  'HAVE FUN STAYING POOR',
   'NGMI',
-  'HFSP',
   'SER THIS IS A WENDYS',
   'OK BOOMER',
+  'SKILL ISSUE',
+  'LEAST UNHINGED',
+  'RARE W',
+  'COMMON L',
+  'DOWN BAD',
+  'DOWN HORRENDOUS',
   
   // Crypto culture
   'HODL',
@@ -131,11 +126,11 @@ export const GM_MESSAGES = [
   'MANIFEST',
   'TRUST THE PROCESS',
   'ONE DAY AT A TIME',
-  'PROGRESS NOT PERFECTION',
   'KEEP GOING',
   'ALMOST THERE',
-  'SENDING ENERGY',
   'BLESS UP',
+  'WE HERE',
+  'MADE IT',
 ]
 
 export const POMODORO_WORK_MESSAGES = [
@@ -146,8 +141,6 @@ export const POMODORO_WORK_MESSAGES = [
   'DEEP WORK',
   'FLOW STATE',
   'GET IT',
-  'HUSTLE',
-  'EXECUTE',
   'SHIP IT',
   'BUILD',
   'CREATE',
@@ -187,12 +180,15 @@ export const STOPWATCH_MESSAGES = [
   'SPEEDRUN',
   'FAST',
   'ZOOM',
-  'TIME IS MONEY',
-  'EVERY SECOND',
   'TICK TOCK',
 ]
 
-// Get a random message from an array
-export function getRandomMessage(messages: string[]): string {
-  return messages[Math.floor(Math.random() * messages.length)]
+// Shuffle array using Fisher-Yates
+export function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
 }

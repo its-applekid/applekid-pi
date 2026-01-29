@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
+import { shuffleArray } from '../messages'
 
 interface ScrollingTickerProps {
   messages: string[]
@@ -8,44 +9,39 @@ interface ScrollingTickerProps {
 export function ScrollingTicker({ messages, speed = 10 }: ScrollingTickerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
-  const [currentMessage, setCurrentMessage] = useState(() => 
-    messages[Math.floor(Math.random() * messages.length)]
-  )
+  
+  // Shuffle messages and track current index
+  const [shuffledMessages, setShuffledMessages] = useState<string[]>(() => shuffleArray(messages))
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [animationKey, setAnimationKey] = useState(0)
-  const lastMessageRef = useRef(currentMessage)
 
-  // Pick a new random message (different from last)
-  const pickNewMessage = () => {
-    if (messages.length <= 1) {
-      return messages[0] || ''
-    }
-    let newMessage: string
-    do {
-      newMessage = messages[Math.floor(Math.random() * messages.length)]
-    } while (newMessage === lastMessageRef.current && messages.length > 1)
-    lastMessageRef.current = newMessage
-    return newMessage
-  }
-
-  // Update message when messages array changes
+  // Reshuffle when messages array changes
   useEffect(() => {
-    const newMsg = pickNewMessage()
-    setCurrentMessage(newMsg)
+    setShuffledMessages(shuffleArray(messages))
+    setCurrentIndex(0)
     setAnimationKey(prev => prev + 1)
   }, [messages])
 
-  // Timer to change message after each scroll cycle
+  // Timer to advance to next message
   useEffect(() => {
     const interval = setInterval(() => {
-      const newMsg = pickNewMessage()
-      setCurrentMessage(newMsg)
+      setCurrentIndex(prev => {
+        const nextIndex = prev + 1
+        // If we've gone through all messages, reshuffle
+        if (nextIndex >= shuffledMessages.length) {
+          setShuffledMessages(shuffleArray(messages))
+          return 0
+        }
+        return nextIndex
+      })
       setAnimationKey(prev => prev + 1)
-    }, speed * 1000) // Match animation duration
+    }, speed * 1000)
 
     return () => clearInterval(interval)
-  }, [speed, messages])
+  }, [speed, messages, shuffledMessages.length])
 
   const [animationStyle, setAnimationStyle] = useState<React.CSSProperties>({})
+  const currentMessage = shuffledMessages[currentIndex] || messages[0] || ''
 
   useEffect(() => {
     if (containerRef.current && contentRef.current) {
