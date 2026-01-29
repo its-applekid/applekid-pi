@@ -473,6 +473,9 @@ export class Gradient {
         if (this.isMetaKey) delta = -160;
         this.t += delta;
       }
+      // Update color transition if active
+      this.updateColorTransition();
+      
       this.mesh.material.uniforms.u_time.value = this.t;
       this.minigl!.render();
     }
@@ -511,26 +514,91 @@ export class Gradient {
     return this;
   };
 
-  // Dynamically update gradient colors (4 hex strings)
-  setColors = (colors: [string, string, string, string]) => {
+  // Color transition state
+  private colorTransition: {
+    from: number[][];
+    to: number[][];
+    startTime: number;
+    duration: number;
+  } | null = null;
+
+  // Lerp between two values
+  private lerp(a: number, b: number, t: number): number {
+    return a + (b - a) * t;
+  }
+
+  // Lerp between two color arrays
+  private lerpColor(from: number[], to: number[], t: number): number[] {
+    return [
+      this.lerp(from[0], to[0], t),
+      this.lerp(from[1], to[1], t),
+      this.lerp(from[2], to[2], t),
+    ];
+  }
+
+  // Easing function for smoother transitions
+  private easeInOutCubic(t: number): number {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  // Apply colors to uniforms
+  private applyColors(colors: number[][]) {
+    if (!this.uniforms) return;
+    
+    if (this.uniforms.u_baseColor) {
+      this.uniforms.u_baseColor.value = colors[0];
+    }
+    
+    if (this.uniforms.u_waveLayers && this.uniforms.u_waveLayers.value) {
+      for (let i = 0; i < this.uniforms.u_waveLayers.value.length && i < colors.length - 1; i++) {
+        if (this.uniforms.u_waveLayers.value[i]?.value?.color) {
+          this.uniforms.u_waveLayers.value[i].value.color.value = colors[i + 1];
+        }
+      }
+    }
+  }
+
+  // Update color transition (called from animate loop)
+  private updateColorTransition = () => {
+    if (!this.colorTransition) return;
+    
+    const elapsed = performance.now() - this.colorTransition.startTime;
+    const rawProgress = Math.min(elapsed / this.colorTransition.duration, 1);
+    const progress = this.easeInOutCubic(rawProgress);
+    
+    // Interpolate all colors
+    const currentColors = this.colorTransition.from.map((fromColor, i) => 
+      this.lerpColor(fromColor, this.colorTransition!.to[i], progress)
+    );
+    
+    this.applyColors(currentColors);
+    this.sectionColors = currentColors;
+    
+    // Transition complete
+    if (rawProgress >= 1) {
+      this.colorTransition = null;
+    }
+  };
+
+  // Dynamically update gradient colors with smooth transition
+  setColors = (colors: [string, string, string, string], duration = 3000) => {
     if (!this.uniforms || !this.mesh) return;
     
     // Convert hex colors to normalized RGB
-    const normalizedColors = colors.map(hex => hexToNormalized(hex));
-    this.sectionColors = normalizedColors;
+    const targetColors = colors.map(hex => hexToNormalized(hex));
     
-    // Update base color uniform
-    if (this.uniforms.u_baseColor) {
-      this.uniforms.u_baseColor.value = normalizedColors[0];
-    }
-    
-    // Update wave layer colors
-    if (this.uniforms.u_waveLayers && this.uniforms.u_waveLayers.value) {
-      for (let i = 0; i < this.uniforms.u_waveLayers.value.length && i < normalizedColors.length - 1; i++) {
-        if (this.uniforms.u_waveLayers.value[i]?.value?.color) {
-          this.uniforms.u_waveLayers.value[i].value.color.value = normalizedColors[i + 1];
-        }
-      }
+    // If we have current colors, animate to new ones
+    if (this.sectionColors.length > 0) {
+      this.colorTransition = {
+        from: this.sectionColors.map(c => [...c]), // Clone current colors
+        to: targetColors,
+        startTime: performance.now(),
+        duration,
+      };
+    } else {
+      // First time - set immediately
+      this.sectionColors = targetColors;
+      this.applyColors(targetColors);
     }
   };
 
