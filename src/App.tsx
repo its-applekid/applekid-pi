@@ -35,11 +35,15 @@ const STATE_GRADIENTS: Record<FaceState, GradientColors> = {
   done: [GRUVBOX.green, GRUVBOX.greenLight, GRUVBOX.aqua, GRUVBOX.aquaLight],
 }
 
+const TRANSITION_DURATION = 3000 // 3 seconds
+
 function App() {
-  const [faceState, setFaceState] = useState<FaceState>('awake')
+  const [targetState, setTargetState] = useState<FaceState>('awake')
+  const [displayState, setDisplayState] = useState<FaceState>('awake')
   const [time, setTime] = useState(new Date())
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gradientRef = useRef<Gradient | null>(null)
+  const faceTimeoutRef = useRef<number | null>(null)
 
   // Update time every second
   useEffect(() => {
@@ -63,18 +67,35 @@ function App() {
     }
   }, [])
 
-  // Update gradient colors when state changes
+  // Update gradient colors immediately when target state changes
+  // But delay face update until transition completes
   useEffect(() => {
     if (gradientRef.current) {
-      const colors = STATE_GRADIENTS[faceState]
-      gradientRef.current.setColors(colors)
+      const colors = STATE_GRADIENTS[targetState]
+      gradientRef.current.setColors(colors, TRANSITION_DURATION)
     }
-  }, [faceState])
+    
+    // Clear any pending face update
+    if (faceTimeoutRef.current) {
+      clearTimeout(faceTimeoutRef.current)
+    }
+    
+    // Schedule face update after transition completes
+    faceTimeoutRef.current = window.setTimeout(() => {
+      setDisplayState(targetState)
+    }, TRANSITION_DURATION)
+    
+    return () => {
+      if (faceTimeoutRef.current) {
+        clearTimeout(faceTimeoutRef.current)
+      }
+    }
+  }, [targetState])
 
   // Handle state transitions
   const transitionToState = (newState: FaceState) => {
-    if (newState === faceState) return
-    setFaceState(newState)
+    if (newState === targetState) return
+    setTargetState(newState)
   }
 
   // Cycle through states for demo (remove in production)
@@ -86,7 +107,7 @@ function App() {
       transitionToState(states[index] as FaceState)
     }, 10000) // 10 second rotation
     return () => clearInterval(interval)
-  }, [faceState])
+  }, [targetState])
 
   const formattedTime = time.toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -102,7 +123,7 @@ function App() {
     done: 'Done!',
   }
 
-  const currentColors = STATE_GRADIENTS[faceState]
+  const currentColors = STATE_GRADIENTS[targetState]
 
   return (
     <div 
@@ -138,7 +159,7 @@ function App() {
           {formattedTime}
         </div>
         <div className="absolute top-2 right-3 text-xs uppercase tracking-wider text-white/50">
-          {stateLabel[faceState]}
+          {stateLabel[displayState]}
         </div>
         
         {/* Face - small centered square */}
@@ -150,7 +171,7 @@ function App() {
             maxWidth: '96px',
           }}
         >
-          <AsciiFace state={faceState} size="small" />
+          <AsciiFace state={displayState} size="small" />
         </div>
       </div>
 

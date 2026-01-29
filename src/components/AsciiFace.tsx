@@ -8,28 +8,23 @@ interface AsciiFaceProps {
 const FACES: Record<FaceState, string[]> = {
   awake: [
     '✨  ✨',
-    '      ',
-    ' ‿‿ ',
+    '  ‿‿  ',
   ],
   working: [
     '◉   ◉',
-    '      ',
     '  ━━  ',
   ],
   sleeping: [
     '—   —',
-    '      ',
     '  ～  ',
   ],
   attention: [
     '◎   ◎',
-    '      ',
     '  ○   ',
   ],
   done: [
-    '✨  ✨',
-    '      ',
-    ' ╰‿╯',
+    '◡   ◡',
+    '  ◡   ',
   ],
 }
 
@@ -39,7 +34,7 @@ export function AsciiFace({ state, size = 'large' }: AsciiFaceProps) {
 
   return (
     <pre 
-      className={`font-mono ${textSize} leading-relaxed select-none text-center`}
+      className={`font-mono ${textSize} leading-tight select-none text-center`}
       style={{ 
         color: 'rgba(255, 255, 255, 0.95)',
         textShadow: '0 0 20px rgba(255, 255, 255, 0.5)',
