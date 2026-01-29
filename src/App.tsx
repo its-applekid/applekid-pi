@@ -295,56 +295,51 @@ function App() {
         </div>
 
         {/* Main area - full width, content centered */}
-        <div className="w-full h-full flex items-center justify-center relative">
-          {activeMode !== 'none' ? (
-            // Timer/Stopwatch mode layout
-            <>
-              {/* Face in top right */}
-              <div className="absolute top-1 right-2 transition-all duration-500">
-                <div className="flex flex-col items-end">
-                  <div className="text-xs uppercase tracking-wider text-white/50 mb-1">
-                    {getStateLabel()}
-                  </div>
-                  <AsciiFace state="working" size="small" />
-                </div>
-              </div>
-              
-              {/* Timer/Stopwatch in center */}
-              {activeMode === 'pomodoro' ? (
-                <TimerDisplay
-                  timeRemaining={pomodoro.timeRemaining}
-                  phase={pomodoro.phase}
-                  isPaused={pomodoro.isPaused}
-                />
-              ) : (
-                <StopwatchDisplay
-                  elapsedTime={stopwatch.elapsedTime}
-                  currentLapTime={stopwatch.currentLapTime}
-                  laps={stopwatch.laps}
-                  isPaused={stopwatch.isPaused}
-                />
-              )}
-            </>
-          ) : (
-            // Normal mode layout
-            <>
-              <div className="absolute top-2 right-2 text-xs uppercase tracking-wider text-white/50">
-                {getStateLabel()}
-              </div>
-              
-              {/* Face - centered */}
-              <div 
-                className="flex items-center justify-center transition-all duration-500"
-                style={{ 
-                  width: '30%', 
-                  height: '100%',
-                  maxWidth: '120px',
-                }}
-              >
-                <AsciiFace state={displayState} size="small" />
-              </div>
-            </>
-          )}
+        <div className="w-full h-full relative">
+          {/* State label - always top right */}
+          <div className="absolute top-2 right-2 text-xs uppercase tracking-wider text-white/50 z-10">
+            {getStateLabel()}
+          </div>
+          
+          {/* Face - animates between center and top-right */}
+          <div 
+            className="absolute transition-all duration-700 ease-in-out"
+            style={activeMode !== 'none' ? {
+              // Top right position (below label)
+              top: '1.5rem',
+              right: '0.5rem',
+              transform: 'scale(0.8)',
+            } : {
+              // Centered position
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%) scale(1)',
+            }}
+          >
+            <AsciiFace state={activeMode !== 'none' ? 'working' : displayState} size="small" />
+          </div>
+          
+          {/* Timer/Stopwatch - fades in when active */}
+          <div 
+            className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${
+              activeMode !== 'none' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+          >
+            {activeMode === 'pomodoro' ? (
+              <TimerDisplay
+                timeRemaining={pomodoro.timeRemaining}
+                phase={pomodoro.phase}
+                isPaused={pomodoro.isPaused}
+              />
+            ) : activeMode === 'stopwatch' ? (
+              <StopwatchDisplay
+                elapsedTime={stopwatch.elapsedTime}
+                currentLapTime={stopwatch.currentLapTime}
+                laps={stopwatch.laps}
+                isPaused={stopwatch.isPaused}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
 
