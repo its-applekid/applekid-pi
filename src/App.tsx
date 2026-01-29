@@ -15,7 +15,6 @@ import {
   POMODORO_WORK_MESSAGES, 
   POMODORO_BREAK_MESSAGES, 
   STOPWATCH_MESSAGES,
-  getRandomMessage,
 } from './messages'
 
 // Gruvbox color palette
@@ -66,7 +65,6 @@ function App() {
   const [displayState, setDisplayState] = useState<FaceState>('awake')
   const [activeMode, setActiveMode] = useState<ActiveMode>('none')
   const [time, setTime] = useState(new Date())
-  const [tickerMessage, setTickerMessage] = useState(getRandomMessage(GM_MESSAGES))
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gradientRef = useRef<Gradient | null>(null)
   const faceTimeoutRef = useRef<number | null>(null)
@@ -78,13 +76,9 @@ function App() {
       if (gradientRef.current && activeMode === 'pomodoro') {
         gradientRef.current.setColors(POMODORO_GRADIENTS[phase], TRANSITION_DURATION)
       }
-      // Update ticker message for new phase
-      const messages = phase === 'work' ? POMODORO_WORK_MESSAGES : POMODORO_BREAK_MESSAGES
-      setTickerMessage(getRandomMessage(messages))
     },
     onClose: () => {
       setActiveMode('none')
-      setTickerMessage(getRandomMessage(GM_MESSAGES))
       startDemoMode()
     },
   })
@@ -100,19 +94,16 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
-  // Rotate ticker message periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      let messages = GM_MESSAGES
-      if (activeMode === 'pomodoro') {
-        messages = pomodoro.phase === 'work' ? POMODORO_WORK_MESSAGES : POMODORO_BREAK_MESSAGES
-      } else if (activeMode === 'stopwatch') {
-        messages = STOPWATCH_MESSAGES
-      }
-      setTickerMessage(getRandomMessage(messages))
-    }, 15000) // Change every 15 seconds
-    return () => clearInterval(interval)
-  }, [activeMode, pomodoro.phase])
+  // Get ticker messages based on mode
+  const getTickerMessages = () => {
+    if (activeMode === 'pomodoro') {
+      return pomodoro.phase === 'work' ? POMODORO_WORK_MESSAGES : POMODORO_BREAK_MESSAGES
+    }
+    if (activeMode === 'stopwatch') {
+      return STOPWATCH_MESSAGES
+    }
+    return GM_MESSAGES
+  }
 
   // Initialize gradient
   useEffect(() => {
@@ -191,7 +182,6 @@ function App() {
       demoIntervalRef.current = null
     }
     setActiveMode('pomodoro')
-    setTickerMessage(getRandomMessage(POMODORO_WORK_MESSAGES))
     pomodoro.start()
   }
 
@@ -201,7 +191,6 @@ function App() {
       demoIntervalRef.current = null
     }
     setActiveMode('stopwatch')
-    setTickerMessage(getRandomMessage(STOPWATCH_MESSAGES))
     stopwatch.start()
     if (gradientRef.current) {
       gradientRef.current.setColors(STOPWATCH_GRADIENT, TRANSITION_DURATION)
@@ -211,14 +200,12 @@ function App() {
   const handleStopwatchClose = () => {
     stopwatch.close()
     setActiveMode('none')
-    setTickerMessage(getRandomMessage(GM_MESSAGES))
     startDemoMode()
   }
 
   const handlePomodoroClose = () => {
     pomodoro.close()
     setActiveMode('none')
-    setTickerMessage(getRandomMessage(GM_MESSAGES))
     startDemoMode()
   }
 
@@ -288,9 +275,9 @@ function App() {
       </div>
 
       {/* Main content - 75% height */}
-      <div className="relative z-10 flex-1 flex" style={{ height: '75%' }}>
-        {/* Left Sidebar - 20% width */}
-        <div className="flex-shrink-0" style={{ width: '20%' }}>
+      <div className="relative z-10 flex-1" style={{ height: '75%' }}>
+        {/* Left Sidebar - absolute positioned */}
+        <div className="absolute left-0 top-0 bottom-0 z-20" style={{ width: '20%' }}>
           <Sidebar
             activeMode={activeMode}
             pomodoroPaused={pomodoro.isPaused}
@@ -307,8 +294,8 @@ function App() {
           />
         </div>
 
-        {/* Main area - 80% width */}
-        <div className="flex-1 flex items-center justify-center relative">
+        {/* Main area - full width, content centered */}
+        <div className="w-full h-full flex items-center justify-center relative">
           {activeMode !== 'none' ? (
             // Timer/Stopwatch mode layout
             <>
@@ -363,7 +350,7 @@ function App() {
 
       {/* Scrolling ticker - 25% height */}
       <div className="relative z-10" style={{ height: '25%' }}>
-        <ScrollingTicker message={tickerMessage} speed={8} />
+        <ScrollingTicker messages={getTickerMessages()} speed={8} />
       </div>
     </div>
   )

@@ -1,13 +1,43 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 
 interface ScrollingTickerProps {
-  message: string
+  messages: string[]
   speed?: number
 }
 
-export function ScrollingTicker({ message, speed = 10 }: ScrollingTickerProps) {
+export function ScrollingTicker({ messages, speed = 10 }: ScrollingTickerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const [currentMessage, setCurrentMessage] = useState(() => 
+    messages[Math.floor(Math.random() * messages.length)]
+  )
+  const [animationKey, setAnimationKey] = useState(0)
+
+  // Pick a new random message (different from current)
+  const pickNewMessage = useCallback(() => {
+    if (messages.length <= 1) {
+      setCurrentMessage(messages[0] || '')
+      return
+    }
+    let newMessage: string
+    do {
+      newMessage = messages[Math.floor(Math.random() * messages.length)]
+    } while (newMessage === currentMessage && messages.length > 1)
+    setCurrentMessage(newMessage)
+    setAnimationKey(prev => prev + 1)
+  }, [messages, currentMessage])
+
+  // Update message when messages array changes
+  useEffect(() => {
+    setCurrentMessage(messages[Math.floor(Math.random() * messages.length)])
+    setAnimationKey(prev => prev + 1)
+  }, [messages])
+
+  // Handle animation end - pick new message
+  const handleAnimationIteration = useCallback(() => {
+    pickNewMessage()
+  }, [pickNewMessage])
+
   const [animationStyle, setAnimationStyle] = useState<React.CSSProperties>({})
 
   useEffect(() => {
@@ -19,13 +49,11 @@ export function ScrollingTicker({ message, speed = 10 }: ScrollingTickerProps) {
       const endX = -contentWidth
       
       setAnimationStyle({
-        transform: `translateX(${startX}px)`,
-        animation: `ticker-scroll ${speed}s linear infinite`,
         ['--start-x' as string]: `${startX}px`,
         ['--end-x' as string]: `${endX}px`,
       })
     }
-  }, [speed, message])
+  }, [currentMessage, animationKey])
   
   return (
     <div 
@@ -34,16 +62,19 @@ export function ScrollingTicker({ message, speed = 10 }: ScrollingTickerProps) {
     >
       <div 
         ref={contentRef}
+        key={animationKey}
         className="ticker-content whitespace-nowrap"
         style={{ 
           ...animationStyle,
+          animation: `ticker-scroll ${speed}s linear infinite`,
           fontFamily: "'Press Start 2P', monospace",
           fontSize: '2rem',
           color: 'rgba(255, 255, 255, 0.9)',
           textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
         }}
+        onAnimationIteration={handleAnimationIteration}
       >
-        {message}
+        {currentMessage}
       </div>
     </div>
   )
