@@ -1,16 +1,141 @@
 // Rotating message variations for each mode
 
 export const GM_MESSAGES = [
+  // Classic greetings
   'GM',
   'gm gm',
+  'gm frens',
   'sup',
   'yooo',
   'wagmi',
-  'rise n grind',
-  'lesgo',
-  'anotha day',
-  'vibin',
+  'lfg',
   'hey hey',
+  'vibin',
+  'blessed',
+  
+  // Optimism / Ethereum
+  'STAY OPTIMISTIC',
+  'OP STACK',
+  'SUPERCHAIN',
+  'L2 SUMMER',
+  'ROLLUP SZN',
+  'ETH IS MONEY',
+  'ULTRASOUND',
+  'THE MERGE',
+  'BLOB SZN',
+  'ONCHAIN',
+  'BASED',
+  'DECENTRALIZE',
+  'TRUSTLESS',
+  'PERMISSIONLESS',
+  'OPEN SOURCE',
+  'COMPOSABLE',
+  'MODULAR',
+  'INTEROP',
+  
+  // Public goods / Impact
+  'FUND PUBLIC GOODS',
+  'RETRO FUNDING',
+  'IMPACT EQUALS PROFIT',
+  'FOR THE PEOPLE',
+  'COLLECTIVE',
+  'COORDINATION',
+  'ALIGN INCENTIVES',
+  'POSITIVE SUM',
+  'WIN WIN WIN',
+  'COMMON GOOD',
+  'BUILD IN PUBLIC',
+  'OPEN ACCESS',
+  'CREDIBLE NEUTRAL',
+  
+  // Positive vibes
+  'GOOD VIBES ONLY',
+  'SUNSHINE',
+  'BRIGHT DAYS',
+  'STAY GOLDEN',
+  'KEEP SHINING',
+  'RADIATE POSITIVITY',
+  'SPREAD LOVE',
+  'BE KIND',
+  'STAY CURIOUS',
+  'DREAM BIG',
+  'KEEP BUILDING',
+  'NEVER STOP',
+  'ONWARDS',
+  'LEVEL UP',
+  'EVOLVE',
+  'GROW',
+  
+  // Lock in / Grind
+  'LOCK IN',
+  'STAY FOCUSED',
+  'DEEP WORK',
+  'FLOW STATE',
+  'IN THE ZONE',
+  'TUNNEL VISION',
+  'EXECUTE',
+  'SHIP IT',
+  'BUILD BUILD BUILD',
+  'GRINDSET',
+  'NO DAYS OFF',
+  'RISE N GRIND',
+  'EARLY BIRD',
+  'NIGHT OWL',
+  
+  // Funny / Sassy
+  'DEEZ NUTS',
+  'GOTEEM',
+  'NO CAP',
+  'FR FR',
+  'SHEEEESH',
+  'BUSSIN',
+  'ITS GIVING',
+  'SLAY',
+  'PERIODT',
+  'UNDERSTOOD THE ASSIGNMENT',
+  'MAIN CHARACTER',
+  'NPC BEHAVIOR',
+  'TOUCH GRASS',
+  'PROBABLY NOTHING',
+  'FEW UNDERSTAND',
+  'COPE',
+  'SEETHE',
+  'HAVE FUN STAYING POOR',
+  'NGMI',
+  'HFSP',
+  'SER THIS IS A WENDYS',
+  'OK BOOMER',
+  
+  // Crypto culture
+  'HODL',
+  'DIAMOND HANDS',
+  'TO THE MOON',
+  'NUMBER GO UP',
+  'WEN LAMBO',
+  'DEGEN HOURS',
+  'APE IN',
+  'FOMO',
+  'REKT',
+  'GG',
+  'ALPHA LEAK',
+  'IYKYK',
+  'ANON',
+  'FREN',
+  'SER',
+  'GIGABRAIN',
+  'SMOL BRAIN',
+  
+  // Motivational
+  'YOU GOT THIS',
+  'BELIEVE',
+  'MANIFEST',
+  'TRUST THE PROCESS',
+  'ONE DAY AT A TIME',
+  'PROGRESS NOT PERFECTION',
+  'KEEP GOING',
+  'ALMOST THERE',
+  'SENDING ENERGY',
+  'BLESS UP',
 ]
 
 export const POMODORO_WORK_MESSAGES = [
@@ -24,6 +149,11 @@ export const POMODORO_WORK_MESSAGES = [
   'HUSTLE',
   'EXECUTE',
   'SHIP IT',
+  'BUILD',
+  'CREATE',
+  'TUNNEL VISION',
+  'NO DISTRACTIONS',
+  'ZONE IN',
 ]
 
 export const POMODORO_BREAK_MESSAGES = [
@@ -37,6 +167,11 @@ export const POMODORO_BREAK_MESSAGES = [
   'RESET',
   'ZEN',
   'PAUSE',
+  'TOUCH GRASS',
+  'SNACK TIME',
+  'GOOD JOB',
+  'EARNED IT',
+  'REFRESH',
 ]
 
 export const STOPWATCH_MESSAGES = [
@@ -50,23 +185,14 @@ export const STOPWATCH_MESSAGES = [
   'ON THE CLOCK',
   'RACE MODE',
   'SPEEDRUN',
+  'FAST',
+  'ZOOM',
+  'TIME IS MONEY',
+  'EVERY SECOND',
+  'TICK TOCK',
 ]
 
 // Get a random message from an array
 export function getRandomMessage(messages: string[]): string {
   return messages[Math.floor(Math.random() * messages.length)]
-}
-
-// Get messages for the ticker based on current mode
-export function getTickerMessages(mode: 'gm' | 'pomodoro-work' | 'pomodoro-break' | 'stopwatch'): string[] {
-  switch (mode) {
-    case 'pomodoro-work':
-      return POMODORO_WORK_MESSAGES
-    case 'pomodoro-break':
-      return POMODORO_BREAK_MESSAGES
-    case 'stopwatch':
-      return STOPWATCH_MESSAGES
-    default:
-      return GM_MESSAGES
-  }
 }
