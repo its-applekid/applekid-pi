@@ -3,13 +3,23 @@ import { AsciiFace } from './components/AsciiFace'
 import type { FaceState } from './components/AsciiFace'
 import { ScrollingTicker } from './components/ScrollingTicker'
 
-// Gradient colors for each state
-const STATE_GRADIENTS: Record<FaceState, { from: string; to: string }> = {
-  awake: { from: '#FF0420', to: '#FF6B35' },      // Red-orange (Optimism)
-  working: { from: '#627EEA', to: '#8C8DFC' },    // Purple (Ethereum)
-  sleeping: { from: '#1a1a2e', to: '#16213e' },   // Dark blue
-  attention: { from: '#FF6B35', to: '#FFD93D' },  // Orange-yellow
-  done: { from: '#00D395', to: '#00F5A0' },       // Green (success)
+// Gradient colors for each state - multiple stops for smooth feel
+const STATE_GRADIENTS: Record<FaceState, { colors: string[] }> = {
+  awake: { 
+    colors: ['#FF0420', '#FF3D5A', '#FF6B35', '#FF8C42', '#FF6B35', '#FF0420']
+  },
+  working: { 
+    colors: ['#627EEA', '#7B68EE', '#8C8DFC', '#A78BFA', '#8C8DFC', '#627EEA']
+  },
+  sleeping: { 
+    colors: ['#1a1a2e', '#16213e', '#1e3a5f', '#16213e', '#1a1a2e', '#0f0f1a']
+  },
+  attention: { 
+    colors: ['#FF6B35', '#FF8C42', '#FFD93D', '#FFEC6E', '#FFD93D', '#FF6B35']
+  },
+  done: { 
+    colors: ['#00D395', '#00E5A0', '#00F5A0', '#50FFB0', '#00F5A0', '#00D395']
+  },
 }
 
 function App() {
@@ -50,23 +60,39 @@ function App() {
   }
 
   const gradient = STATE_GRADIENTS[faceState]
+  const gradientStr = gradient.colors.map((c, i) => 
+    `${c} ${(i / (gradient.colors.length - 1)) * 100}%`
+  ).join(', ')
 
   return (
     <div 
-      className="h-screen w-screen flex flex-col overflow-hidden transition-all duration-1000 ease-in-out"
+      className="h-screen w-screen flex flex-col overflow-hidden relative"
       style={{ 
-        background: `linear-gradient(135deg, ${gradient.from} 0%, ${gradient.to} 100%)`,
         maxWidth: '480px',
         maxHeight: '320px',
         margin: '0 auto',
       }}
     >
-      {/* Animated gradient overlay */}
+      {/* Base animated gradient */}
       <div 
-        className="absolute inset-0 opacity-30 animate-gradient-shift"
+        className="absolute inset-0 animate-gradient-move transition-all duration-[2000ms] ease-in-out"
         style={{
-          background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
-                       radial-gradient(circle at 70% 70%, rgba(255,255,255,0.1) 0%, transparent 50%)`,
+          background: `linear-gradient(135deg, ${gradientStr})`,
+          backgroundSize: '400% 400%',
+        }}
+      />
+
+      {/* Floating orbs for depth */}
+      <div 
+        className="absolute inset-0 animate-orb-float pointer-events-none"
+        style={{
+          background: `radial-gradient(circle at 30% 40%, rgba(255,255,255,0.15) 0%, transparent 40%)`,
+        }}
+      />
+      <div 
+        className="absolute inset-0 animate-orb-float-delayed pointer-events-none"
+        style={{
+          background: `radial-gradient(circle at 70% 60%, rgba(255,255,255,0.1) 0%, transparent 35%)`,
         }}
       />
 
