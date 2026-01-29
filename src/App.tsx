@@ -92,22 +92,16 @@ function App() {
     }
   }, [targetState])
 
-  // Handle state transitions
-  const transitionToState = (newState: FaceState) => {
-    if (newState === targetState) return
-    setTargetState(newState)
-  }
-
   // Cycle through states for demo (remove in production)
   useEffect(() => {
     const states: FaceState[] = ['awake', 'working', 'done', 'attention', 'sleeping']
     let index = 0
     const interval = setInterval(() => {
       index = (index + 1) % states.length
-      transitionToState(states[index] as FaceState)
+      setTargetState(states[index])
     }, 10000) // 10 second rotation
     return () => clearInterval(interval)
-  }, [targetState])
+  }, []) // Empty deps - only run once on mount
 
   const formattedTime = time.toLocaleTimeString('en-US', {
     hour: 'numeric',
