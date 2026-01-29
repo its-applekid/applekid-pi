@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 export type PomodoroPhase = 'work' | 'shortBreak' | 'longBreak'
 
@@ -6,18 +6,18 @@ interface PomodoroState {
   isActive: boolean
   isPaused: boolean
   phase: PomodoroPhase
-  phaseIndex: number // 0-5 in the cycle
+  phaseIndex: number
   timeRemaining: number // in seconds
 }
 
 // Phase durations in seconds
 const PHASE_DURATIONS: Record<PomodoroPhase, number> = {
-  work: 25 * 60,      // 25 minutes
-  shortBreak: 5 * 60, // 5 minutes
-  longBreak: 35 * 60, // 35 minutes
+  work: 25 * 60,
+  shortBreak: 5 * 60,
+  longBreak: 35 * 60,
 }
 
-// Cycle: work, short, work, short, work, long (then repeat)
+// Cycle: work, short, work, short, work, long
 const PHASE_SEQUENCE: PomodoroPhase[] = [
   'work', 'shortBreak', 'work', 'shortBreak', 'work', 'longBreak'
 ]
@@ -36,30 +36,50 @@ export function usePomodoro({ onPhaseChange, onClose }: PomodoroProps = {}) {
     timeRemaining: PHASE_DURATIONS.work,
   })
 
-  // Timer tick
+  // Track timing with refs for accuracy
+  const phaseStartTimeRef = useRef<number>(0)
+  const pausedAtRef = useRef<number>(0)
+  const totalPausedTimeRef = useRef<number>(0)
+
+  // Timer tick - use requestAnimationFrame for smooth updates
   useEffect(() => {
     if (!state.isActive || state.isPaused) return
 
-    const interval = setInterval(() => {
-      setState(prev => {
-        if (prev.timeRemaining <= 1) {
-          // Move to next phase
-          const nextIndex = (prev.phaseIndex + 1) % PHASE_SEQUENCE.length
-          const nextPhase = PHASE_SEQUENCE[nextIndex]
-          onPhaseChange?.(nextPhase)
-          return {
-            ...prev,
-            phaseIndex: nextIndex,
-            phase: nextPhase,
-            timeRemaining: PHASE_DURATIONS[nextPhase],
-          }
-        }
-        return { ...prev, timeRemaining: prev.timeRemaining - 1 }
-      })
-    }, 1000)
+    let animationId: number
 
-    return () => clearInterval(interval)
-  }, [state.isActive, state.isPaused, onPhaseChange])
+    const tick = () => {
+      const now = Date.now()
+      const elapsed = Math.floor((now - phaseStartTimeRef.current - totalPausedTimeRef.current) / 1000)
+      const phaseDuration = PHASE_DURATIONS[state.phase]
+      const remaining = Math.max(0, phaseDuration - elapsed)
+
+      if (remaining <= 0) {
+        // Move to next phase
+        const nextIndex = (state.phaseIndex + 1) % PHASE_SEQUENCE.length
+        const nextPhase = PHASE_SEQUENCE[nextIndex]
+        
+        // Reset timing for new phase
+        phaseStartTimeRef.current = Date.now()
+        totalPausedTimeRef.current = 0
+        
+        setState(prev => ({
+          ...prev,
+          phaseIndex: nextIndex,
+          phase: nextPhase,
+          timeRemaining: PHASE_DURATIONS[nextPhase],
+        }))
+        onPhaseChange?.(nextPhase)
+      } else {
+        setState(prev => ({ ...prev, timeRemaining: remaining }))
+      }
+
+      animationId = requestAnimationFrame(tick)
+    }
+
+    animationId = requestAnimationFrame(tick)
+
+    return () => cancelAnimationFrame(animationId)
+  }, [state.isActive, state.isPaused, state.phase, state.phaseIndex, onPhaseChange])
 
   // Notify phase change on start
   useEffect(() => {
@@ -69,29 +89,47 @@ export function usePomodoro({ onPhaseChange, onClose }: PomodoroProps = {}) {
   }, [state.isActive])
 
   const start = useCallback(() => {
+    phaseStartTimeRef.current = Date.now()
+    totalPausedTimeRef.current = 0
     setState(prev => ({ ...prev, isActive: true, isPaused: false }))
   }, [])
 
   const pause = useCallback(() => {
-    setState(prev => ({ ...prev, isPaused: !prev.isPaused }))
+    setState(prev => {
+      if (prev.isPaused) {
+        // Resuming - add paused duration to total
+        totalPausedTimeRef.current += Date.now() - pausedAtRef.current
+        return { ...prev, isPaused: false }
+      } else {
+        // Pausing - record when we paused
+        pausedAtRef.current = Date.now()
+        return { ...prev, isPaused: true }
+      }
+    })
   }, [])
 
   const skip = useCallback(() => {
-    setState(prev => {
-      const nextIndex = (prev.phaseIndex + 1) % PHASE_SEQUENCE.length
-      const nextPhase = PHASE_SEQUENCE[nextIndex]
-      onPhaseChange?.(nextPhase)
-      return {
-        ...prev,
-        phaseIndex: nextIndex,
-        phase: nextPhase,
-        timeRemaining: PHASE_DURATIONS[nextPhase],
-      }
-    })
-  }, [onPhaseChange])
+    const nextIndex = (state.phaseIndex + 1) % PHASE_SEQUENCE.length
+    const nextPhase = PHASE_SEQUENCE[nextIndex]
+    
+    // Reset timing for new phase
+    phaseStartTimeRef.current = Date.now()
+    totalPausedTimeRef.current = 0
+    
+    setState(prev => ({
+      ...prev,
+      phaseIndex: nextIndex,
+      phase: nextPhase,
+      timeRemaining: PHASE_DURATIONS[nextPhase],
+    }))
+    onPhaseChange?.(nextPhase)
+  }, [state.phaseIndex, onPhaseChange])
 
   const reset = useCallback(() => {
     const phase = PHASE_SEQUENCE[0]
+    phaseStartTimeRef.current = Date.now()
+    totalPausedTimeRef.current = 0
+    
     onPhaseChange?.(phase)
     setState({
       isActive: true,
