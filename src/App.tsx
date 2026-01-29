@@ -3,27 +3,50 @@ import { AsciiFace } from './components/AsciiFace'
 import type { FaceState } from './components/AsciiFace'
 import { ScrollingTicker } from './components/ScrollingTicker'
 
-// Gradient colors for each state - multiple stops for smooth feel
+// Gruvbox color palette
+const GRUVBOX = {
+  bg: '#282828',
+  bg1: '#3c3836',
+  bg2: '#504945',
+  red: '#cc241d',
+  redLight: '#fb4934',
+  green: '#98971a',
+  greenLight: '#b8bb26',
+  yellow: '#d79921',
+  yellowLight: '#fabd2f',
+  blue: '#458588',
+  blueLight: '#83a598',
+  purple: '#b16286',
+  purpleLight: '#d3869b',
+  aqua: '#689d6a',
+  aquaLight: '#8ec07c',
+  orange: '#d65d0e',
+  orangeLight: '#fe8019',
+}
+
+// Gradient colors for each state - Gruvbox palette
 const STATE_GRADIENTS: Record<FaceState, { colors: string[] }> = {
   awake: { 
-    colors: ['#FF0420', '#FF3D5A', '#FF6B35', '#FF8C42', '#FF6B35', '#FF0420']
+    colors: [GRUVBOX.orange, GRUVBOX.orangeLight, GRUVBOX.yellow, GRUVBOX.yellowLight, GRUVBOX.orange]
   },
   working: { 
-    colors: ['#627EEA', '#7B68EE', '#8C8DFC', '#A78BFA', '#8C8DFC', '#627EEA']
+    colors: [GRUVBOX.purple, GRUVBOX.purpleLight, GRUVBOX.blue, GRUVBOX.blueLight, GRUVBOX.purple]
   },
   sleeping: { 
-    colors: ['#1a1a2e', '#16213e', '#1e3a5f', '#16213e', '#1a1a2e', '#0f0f1a']
+    colors: [GRUVBOX.bg, GRUVBOX.bg1, GRUVBOX.bg2, GRUVBOX.bg1, GRUVBOX.bg]
   },
   attention: { 
-    colors: ['#FF6B35', '#FF8C42', '#FFD93D', '#FFEC6E', '#FFD93D', '#FF6B35']
+    colors: [GRUVBOX.red, GRUVBOX.redLight, GRUVBOX.orange, GRUVBOX.orangeLight, GRUVBOX.red]
   },
   done: { 
-    colors: ['#00D395', '#00E5A0', '#00F5A0', '#50FFB0', '#00F5A0', '#00D395']
+    colors: [GRUVBOX.green, GRUVBOX.greenLight, GRUVBOX.aqua, GRUVBOX.aquaLight, GRUVBOX.green]
   },
 }
 
 function App() {
   const [faceState, setFaceState] = useState<FaceState>('awake')
+  const [prevState, setPrevState] = useState<FaceState>('awake')
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const [time, setTime] = useState(new Date())
 
   // Update time every second
@@ -34,16 +57,29 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
+  // Handle state transitions with crossfade
+  const transitionToState = (newState: FaceState) => {
+    if (newState === faceState) return
+    setPrevState(faceState)
+    setIsTransitioning(true)
+    setFaceState(newState)
+    
+    // End transition after 3 seconds
+    setTimeout(() => {
+      setIsTransitioning(false)
+    }, 3000)
+  }
+
   // Cycle through states for demo (remove in production)
   useEffect(() => {
     const states: FaceState[] = ['awake', 'working', 'done', 'attention', 'sleeping']
     let index = 0
     const interval = setInterval(() => {
       index = (index + 1) % states.length
-      setFaceState(states[index] as FaceState)
+      transitionToState(states[index] as FaceState)
     }, 10000) // 10 second rotation
     return () => clearInterval(interval)
-  }, [])
+  }, [faceState])
 
   const formattedTime = time.toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -59,9 +95,11 @@ function App() {
     done: 'Done!',
   }
 
-  const gradient = STATE_GRADIENTS[faceState]
-  const gradientStr = gradient.colors.map((c, i) => 
-    `${c} ${(i / (gradient.colors.length - 1)) * 100}%`
+  const currentGradient = STATE_GRADIENTS[faceState]
+  const prevGradient = STATE_GRADIENTS[prevState]
+  
+  const makeGradientStr = (colors: string[]) => colors.map((c, i) => 
+    `${c} ${(i / (colors.length - 1)) * 100}%`
   ).join(', ')
 
   return (
@@ -73,14 +111,25 @@ function App() {
         margin: '0 auto',
       }}
     >
-      {/* Base animated gradient */}
+      {/* Current state gradient (base layer, always visible) */}
       <div 
-        className="absolute inset-0 animate-gradient-move transition-all duration-[2000ms] ease-in-out"
+        className="absolute inset-0 animate-gradient-move"
         style={{
-          background: `linear-gradient(135deg, ${gradientStr})`,
+          background: `linear-gradient(135deg, ${makeGradientStr(currentGradient.colors)})`,
           backgroundSize: '400% 400%',
         }}
       />
+      
+      {/* Previous state gradient (fades out over 3s when transition starts) */}
+      {isTransitioning && (
+        <div 
+          className="absolute inset-0 animate-gradient-move animate-fade-out"
+          style={{
+            background: `linear-gradient(135deg, ${makeGradientStr(prevGradient.colors)})`,
+            backgroundSize: '400% 400%',
+          }}
+        />
+      )}
 
       {/* Floating orbs for depth */}
       <div 
