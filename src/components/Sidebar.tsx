@@ -24,7 +24,7 @@ function IconButton({ onClick, title, children }: IconButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
+      className="w-full h-12 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
       title={title}
     >
       {children}
@@ -69,7 +69,7 @@ export function Sidebar({
   onStopwatchClose,
 }: SidebarProps) {
   const [scrollOffset, setScrollOffset] = useState(0)
-  const iconSize = 20
+  const iconSize = 24
   const strokeWidth = 1.5
 
   // Build icon list based on mode
@@ -161,7 +161,7 @@ export function Sidebar({
   const scrollDown = () => setScrollOffset(prev => Math.min(allIcons.length - maxVisible + 1, prev + 1))
 
   return (
-    <div className="h-full flex flex-col justify-center items-center gap-2 px-2 text-white/90">
+    <div className="h-full flex flex-col justify-center items-stretch gap-2 px-1 text-white/90">
       {/* Up arrow if needed */}
       {needsPagination && canScrollUp && (
         <IconButton onClick={scrollUp} title="Scroll up">
