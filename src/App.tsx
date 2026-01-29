@@ -31,7 +31,7 @@ function App() {
     const interval = setInterval(() => {
       index = (index + 1) % states.length
       setFaceState(states[index] as FaceState)
-    }, 4000)
+    }, 10000) // 10 second rotation
     return () => clearInterval(interval)
   }, [])
 
