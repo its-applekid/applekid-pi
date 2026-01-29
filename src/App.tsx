@@ -152,8 +152,8 @@ function App() {
         } as React.CSSProperties}
       />
 
-      {/* Main content - 80% height */}
-      <div className="relative z-10 flex-1 flex items-center justify-center" style={{ height: '80%' }}>
+      {/* Main content - 75% height */}
+      <div className="relative z-10 flex-1 flex items-center justify-center" style={{ height: '75%' }}>
         {/* Status in corner */}
         <div className="absolute top-2 left-3 text-xs text-white/70">
           {formattedTime}
@@ -175,8 +175,8 @@ function App() {
         </div>
       </div>
 
-      {/* Scrolling ticker - 20% height */}
-      <div className="relative z-10" style={{ height: '20%' }}>
+      {/* Scrolling ticker - 25% height */}
+      <div className="relative z-10" style={{ height: '25%' }}>
         <ScrollingTicker message="GM" speed={8} />
       </div>
     </div>

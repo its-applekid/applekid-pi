@@ -32,17 +32,17 @@ body {
 }
 
 /* Scrolling ticker animation */
-@keyframes scroll-left {
+@keyframes ticker-scroll {
   0% {
-    transform: translateX(100%);
+    transform: translateX(var(--start-x, 100%));
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(var(--end-x, -100%));
   }
 }
 
-.animate-scroll {
-  animation: scroll-left 10s linear infinite;
+.ticker-content {
+  will-change: transform;
 }
 
 /* Blink animation for eyes */
