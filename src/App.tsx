@@ -70,19 +70,31 @@ function App() {
         }}
       />
 
-      {/* Status bar */}
-      <div className="relative z-10 flex justify-between items-center px-3 py-1 text-xs text-white/70">
-        <span>{formattedTime}</span>
-        <span className="uppercase tracking-wider text-white/50">{stateLabel[faceState]}</span>
+      {/* Main content - 80% height */}
+      <div className="relative z-10 flex-1 flex items-center justify-center" style={{ height: '80%' }}>
+        {/* Status in corner */}
+        <div className="absolute top-2 left-3 text-xs text-white/70">
+          {formattedTime}
+        </div>
+        <div className="absolute top-2 right-3 text-xs uppercase tracking-wider text-white/50">
+          {stateLabel[faceState]}
+        </div>
+        
+        {/* Face - small centered square */}
+        <div 
+          className="flex items-center justify-center"
+          style={{ 
+            width: '20%', 
+            height: '100%',
+            maxWidth: '96px',
+          }}
+        >
+          <AsciiFace state={faceState} size="small" />
+        </div>
       </div>
 
-      {/* Main content - Face */}
-      <div className="relative z-10 flex-1 flex items-center justify-center">
-        <AsciiFace state={faceState} />
-      </div>
-
-      {/* Scrolling ticker */}
-      <div className="relative z-10">
+      {/* Scrolling ticker - 20% height */}
+      <div className="relative z-10" style={{ height: '20%' }}>
         <ScrollingTicker message="GM" speed={8} />
       </div>
     </div>
