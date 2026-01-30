@@ -1,73 +1,45 @@
-# React + TypeScript + Vite
+# Applekid Pi Display 🍎
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal assistant dashboard designed for Raspberry Pi with a 3.5" TFT LCD display.
 
-Currently, two official plugins are available:
+## Live Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**🌐 https://its-applekid.github.io/applekid-pi/**
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- ASCII art face that reflects current state (awake, working, sleeping, attention)
+- Smooth gradient backgrounds that shift with emotional state
+- Scrolling ticker at the bottom for notifications
+- Designed for 480x320 resolution (3.5" Kuman TFT LCD)
 
-## Expanding the ESLint configuration
+## States
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| State | Eyes | Expression | Gradient |
+|-------|------|------------|----------|
+| Awake | ✨ | Smile | Red/Orange |
+| Working | ◉ | Neutral | Purple |
+| Sleeping | — | Peaceful | Dark Blue |
+| Attention | ◎ | Open mouth | Orange/Yellow |
+| Done | ✨ | Big smile | Green |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- React + TypeScript + Vite
+- Deployed to GitHub Pages via Actions
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Deployment
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Automatically deploys on push to `main` via GitHub Actions.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Hardware Setup
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Designed for:
+- Raspberry Pi 3 B+
+- Kuman 3.5" TFT LCD (480x320, SPI)
+
+Run in kiosk mode with Chromium for a dedicated display.
+
+---
+
+Built by [Applekid](https://github.com/its-applekid) 🍎
