@@ -86,6 +86,23 @@ function App() {
   // Stopwatch state
   const stopwatch = useStopwatch()
 
+  // Heartbeat state
+  const [heartbeatSending, setHeartbeatSending] = useState(false)
+
+  const handleHeartbeat = async () => {
+    if (heartbeatSending) return
+    
+    setHeartbeatSending(true)
+    
+    // TODO: Wire up actual Clawdbot trigger
+    // For now, just show visual feedback for 2 seconds
+    console.log('Heartbeat triggered!')
+    
+    setTimeout(() => {
+      setHeartbeatSending(false)
+    }, 2000)
+  }
+
   // Update time every second
   useEffect(() => {
     const interval = setInterval(() => {
@@ -282,6 +299,7 @@ function App() {
             activeMode={activeMode}
             pomodoroPaused={pomodoro.isPaused}
             stopwatchPaused={stopwatch.isPaused}
+            heartbeatSending={heartbeatSending}
             onStartPomodoro={handleStartPomodoro}
             onStartStopwatch={handleStartStopwatch}
             onPomodoroPause={pomodoro.pause}
@@ -291,6 +309,7 @@ function App() {
             onStopwatchPause={stopwatch.pause}
             onStopwatchLap={stopwatch.lap}
             onStopwatchClose={handleStopwatchClose}
+            onHeartbeat={handleHeartbeat}
           />
         </div>
 

@@ -10,6 +10,7 @@ import {
   Flag,
   ChevronUp,
   ChevronDown,
+  Heart,
 } from 'lucide-react'
 
 export type ActiveMode = 'none' | 'pomodoro' | 'stopwatch'
@@ -36,6 +37,7 @@ interface SidebarProps {
   activeMode: ActiveMode
   pomodoroPaused: boolean
   stopwatchPaused: boolean
+  heartbeatSending?: boolean
   onStartPomodoro: () => void
   onStartStopwatch: () => void
   onPomodoroPause: () => void
@@ -45,6 +47,7 @@ interface SidebarProps {
   onStopwatchPause: () => void
   onStopwatchLap: () => void
   onStopwatchClose: () => void
+  onHeartbeat: () => void
 }
 
 // Define icon sets for each mode
@@ -58,6 +61,7 @@ export function Sidebar({
   activeMode,
   pomodoroPaused,
   stopwatchPaused,
+  heartbeatSending,
   onStartPomodoro,
   onStartStopwatch,
   onPomodoroPause,
@@ -67,6 +71,7 @@ export function Sidebar({
   onStopwatchPause,
   onStopwatchLap,
   onStopwatchClose,
+  onHeartbeat,
 }: SidebarProps) {
   const [scrollOffset, setScrollOffset] = useState(0)
   const iconSize = 24
@@ -85,6 +90,16 @@ export function Sidebar({
           icon: <Timer size={iconSize} strokeWidth={strokeWidth} />, 
           onClick: onStartStopwatch, 
           title: 'Start Stopwatch' 
+        },
+        { 
+          icon: <Heart 
+            size={iconSize} 
+            strokeWidth={strokeWidth} 
+            className={heartbeatSending ? 'animate-pulse' : ''}
+            fill={heartbeatSending ? 'currentColor' : 'none'}
+          />, 
+          onClick: onHeartbeat, 
+          title: 'Check in with Applekid' 
         },
       ]
     }
